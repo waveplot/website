@@ -1,0 +1,20 @@
+<p>A list of WavePlots by {{name}}:</p>
+
+<table>
+{% for recording in recordings %}
+    {% if current_release_name != recording['cached_release_name'] %}
+      {% set current_release_name = recording['cached_release_name'] %}
+      <tr style="height:60px";><td style="width:60px">
+          <div class="coverartthumb">
+              <img class="unknown" width="40" height="40" src="{{ url_for('static', filename='images/missingart.png') }}"/>
+              <img class="coverartsmall" width="40" height="40" src="http://www.coverartarchive.org/release/{{ recording['release_mbid'] }}/front-250"/>
+          </div>
+        </td><td class="albumname">{{ current_release_name }}</td></tr>
+    {% endif %}
+    <tr style="height:30px;"><td style="width:60px;"><div class="waveplotsmallthumb"><img width="50" height="21" src="{{ url_for('static', filename=recording['image_prefix']+'_small.png') }}"/></div></td><td><a href="{{ url_for('waveplot_display',uuid=recording['waveplot_uuid']) }}">"{{ recording['cached_recording_name'] }}"</a></td></tr>
+
+
+{% endfor %}
+</table>
+
+<div class="centred"><a href="{{ url_for('recache_artist', name=name) }}">Recache</a></div>

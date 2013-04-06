@@ -1,0 +1,30 @@
+    <br/>
+    <br/>
+    <div class="recording_release">
+        <div class="coverart">
+            <img class="unknown" width="200" height="200" src="{{ url_for('static', filename='images/missingart.png') }}"/>
+            <img class="coverart" width="200" height="200" src="http://www.coverartarchive.org/release/{{ info['data'][5] }}/front-250"/>
+        </div><br/>
+        <div class="albumname">{{ info['data'][6] }}</div>
+    </div>
+    <a href="{{ url_for('static', filename=info['image_prefix']+'.png') }}"><img height="151" width="400" src="{{ url_for('static', filename=info['image_prefix']+'_large.png') }}"></img></a>
+
+   <div class="infotext">
+       <table>
+           <tr><td>Length</td><td>{{ info['data'][1] }}</td></tr>
+           <tr><td>Trimmed Length</td><td>{{ info['data'][4] }}</td></tr>
+           <tr><td>Source</td>
+
+           <td>{{info['src']}}
+            {% if info['src'] != "FLAC" %}
+                (~{{ info['bitrate'] }} kbps)
+            {% endif %}
+           </td></tr>
+           <tr><td>Audio Channels</td><td>{{ info['data'][8] }}</td></tr>
+           <tr><td>MB Recording</td><td><a href="http://www.musicbrainz.org/recording/{{ info['data'][2] }}">{{ info['data'][2] }}</a></td></tr>
+       </table>
+   </div><br/><br/>
+
+   <div class="centred">Submitted by {{ info['editor'] }} at {{ info['data'][9] }}<br/><a href="{{ url_for('recache', uuid=info['uuid']) }}">Recache</a></div>
+
+

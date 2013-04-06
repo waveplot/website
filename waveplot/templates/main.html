@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+
+<html>
+
+    <head>
+        <title>{{ title }}</title>
+
+        <meta charset="UTF-8">
+
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+        <link rel="icon" type="image/ico" href="{{ url_for('static', filename='favicon.ico') }}"/>
+    </head>
+
+    <body>
+
+        <div id="content">
+
+            <header></header>
+
+            <div id="left-pane">
+
+                <div class="centred">
+                    <a href="{{ url_for('waveplot_homepage') }}"><span class="title">WavePlot</span></a>
+                </div>
+
+                <nav class="main">
+
+                    <div class="centred"><a href="{{ url_for('waveplot_list',page=1) }}">List Recordings</a></div>
+                    <div class="centred"><a href="{{ url_for('waveplot_list_rec',page=1) }}">Recordings With &gt;1 Waveplots</a></div>
+                    <div class="centred"><a href="{{ url_for('waveplot_register') }}">Register!</a></div>
+                    <div class="centred"><a href="{{ url_for('waveplot_download') }}">Get Started!</a></div>
+
+                </nav><br/>
+
+                <div class="centred">
+                    <form action="{{ url_for('submit_form') }}" method="post">
+                        <input type="text" id="recording_search" maxlength="36" name="mbid"/><br/>
+                        <input type="submit" name="recording_search" value="Lookup!">
+                    </form>
+                </div>
+
+            </div>
+
+            <div id="right-pane">
+
+                <span class="heading">{{ heading | safe }}</span>
+                {{ content | safe }}
+
+            </div>
+
+            <footer class="centred">
+                <span id="copyright">Created by Ben Ockmore | Last Updated 15/02/2013</span>
+            </footer>
+        </div>
+    </body>
+
+</html>
