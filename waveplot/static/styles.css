@@ -2,6 +2,8 @@ html, body { margin: 0; padding: 0; overflow: auto; width: 100%; height: 100%; f
 
 #content { width: 1280px; margin: 100px auto 0 auto; }
 
+#render { width:1280px; height:421px; overflow:auto; margin: 0 auto 0 auto; }
+
 header { margin: 0 auto 2em auto; width: 100%; clear: both; text-align:center; }
 
 #left-pane { margin: 0 auto 2em auto; width: 30%; float: left; }
