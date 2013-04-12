@@ -99,16 +99,13 @@ $(document).ready(function() {
 
     var wp=document.getElementById("waveplot");
 
-    var data_path = $("#waveplot").attr("data_path");
+    var data_path = "http://pi.ockmore.net:19048" + $("#waveplot").attr("data_path");
 
     $.ajax({
         url: data_path,
-        cache: false,
         dataType: 'text',
         success: function(result) {
             var img_data = atob(result);
-
-            console.log(img_data[0]);
 
             drawWavePlot(wp,img_data);
         },

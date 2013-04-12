@@ -43,55 +43,17 @@ function drawPreview(c, waveplot_data) {
     ctx.stroke();
 }
 
-function drawThumb(c, waveplot_data) {
-    var ctx=c.getContext("2d");
-    c.width = waveplot_data.length;
-    c.height = 21;
-    var centre = 10;
-
-    if(c.width < 50) {
-        $("#thCanvas").css("width",c.width);
-    }
-
-    ctx.strokeStyle="#FFFFFF";
-    ctx.fillStyle="#FFFFFF";
-    ctx.fillRect(0,0,c.width,401);
-
-    ctx.translate(0.0,0.5);
-
-    ctx.strokeStyle="#736DAB";
-
-    ctx.beginPath();
-
-    ctx.moveTo(0,centre);
-    ctx.lineTo(c.width,centre);
-
-    ctx.setTransform(1,0,0,1,0.5,0);
-
-    for(var i = 0; i != waveplot_data.length; i++)
-    {
-        var pixel_height = waveplot_data.charCodeAt(i);
-        ctx.moveTo(i,centre - pixel_height);
-        ctx.lineTo(i,centre + pixel_height + 1);
-    }
-    ctx.stroke();
-}
-
-
 $(document).ready(function() {
 
     var wp=document.getElementById("wp_canvas");
 
-    var data_path = $("#wp_canvas").attr("data_path");
+    var data_path = "http://pi.ockmore.net:19048" + $("#wp_canvas").attr("data_path");
 
     $.ajax({
         url: data_path,
-        cache: false,
         dataType: 'text',
         success: function(result) {
             var img_data = atob(result);
-
-            console.log(img_data[0]);
 
             drawPreview(wp,img_data);
         },

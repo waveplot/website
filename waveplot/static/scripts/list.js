@@ -50,20 +50,17 @@ $(document).ready(function() {
 
     for(var i = 0; i != canvases.length; i++) {
 
-        var wp = canvases[i];
-        var data_path = canvases[i].getAttribute("data_path");
+        var data_path = "http://pi.ockmore.net:19048" + canvases[i].getAttribute("data_path");
+        //var data_path = canvases[i].getAttribute("data_path");
 
         $.ajax({
             url: data_path,
-            async: false,
-            cache: false,
+            context: canvases[i],
             dataType: 'text',
             success: function(result) {
                 var img_data = atob(result);
 
-                console.log(img_data[0]);
-
-                drawThumb(wp,img_data);
+                drawThumb(this,img_data);
             },
             error: function( jqXHR, textStatus, errorThrown) {
                 console.log(textStatus);
