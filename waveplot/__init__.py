@@ -57,10 +57,15 @@ with open(passwords.MYSQL_PASSWORD_FILE, "r") as mysql_pass_file:
 
 db_con = mdb.connect('localhost', mysql_user, mysql_pass, 'waveplot', use_unicode = True, charset = "utf8")
 
-lookup_queue = Queue.Queue(maxsize = 10000)
+lookup_queue = Queue.PriorityQueue(maxsize = 10000)
 lookup_thread = musicbrainz_lookup.LookupThread(lookup_queue)
 lookup_thread.setDaemon(True)
 lookup_thread.start()
+
+fast_lookup_queue = Queue.PriorityQueue(maxsize = 100)
+fast_lookup_thread = musicbrainz_lookup.LookupThread(fast_lookup_queue)
+fast_lookup_thread.setDaemon(True)
+fast_lookup_thread.start()
 
 def get_cursor(db_con, use_dict = False):
     try:
@@ -148,46 +153,6 @@ def check_for_duplicate(db_cur, image_hash):
     else:
         return None
 
-def get_MB_info(release_mbid, recording_mbid):
-    req = urllib2.Request("http://musicbrainz.org/ws/2/release/{}?inc=artist-credits&fmt=json".format(release_mbid))
-    try:
-        response = urllib2.urlopen(req)
-    except urllib2.HTTPError:
-        time.sleep(1)
-        try:
-            response = urllib2.urlopen(req)
-        except urllib2.HTTPError:
-            return None
-
-    release_data = json.loads(unicode(response.read(), encoding = "utf8"))
-
-    time.sleep(1)
-
-    req = urllib2.Request("http://musicbrainz.org/ws/2/recording/{}?fmt=json".format(recording_mbid))
-    try:
-        response = urllib2.urlopen(req)
-    except urllib2.HTTPError:
-        time.sleep(1)
-        try:
-            response = urllib2.urlopen(req)
-        except urllib2.HTTPError:
-            return None
-
-    recording_data = json.loads(unicode(response.read(), encoding = "utf8"))
-
-    aartist_credit = u""
-    for c in release_data["artist-credit"]:
-        aartist_credit += c["artist"]["name"]
-
-        if "joinphrase" in c:
-            aartist_credit += c["joinphrase"]
-
-    release_name = release_data["title"]
-    recording_name = recording_data["title"]
-
-    return (recording_name, release_name, aartist_credit)
-
-
 
 @app.route('/submit', methods = ['POST'])
 def recieve_waveplot():
@@ -262,7 +227,7 @@ def recieve_waveplot():
 
     db_con.commit()
 
-    lookup_queue.put((uuid.hex, release_mbid, recording_mbid))
+    lookup_queue.put((1, uuid.hex, 2.0))
 
     received_waveplot.generate_image_data()
     received_waveplot.save()
@@ -271,22 +236,9 @@ def recieve_waveplot():
 
 @app.route("/recache/<uuid>")
 def recache(uuid):
-    if db_con is None:
-        return False
+    fast_lookup_queue.put((0, uuid, 1.0))
 
-    cur = get_cursor(db_con)
-    cur.execute("SELECT recording_mbid, cached_recording_name, release_mbid, cached_release_name, cached_release_artist FROM tracks WHERE waveplot_uuid='{}' LIMIT 1000".format(uuid))
-    row = cur.fetchone()
-
-    result = get_MB_info(row[2], row[0])
-    if result is not None:
-        recording_name, release_name, aartist_credit = result
-
-        if (recording_name != row[1]) or (release_name != row[3]) or (aartist_credit != row[4]):
-            submit_string = u"UPDATE tracks SET cached_recording_name='{}',cached_release_name='{}',cached_release_artist='{}' WHERE waveplot_uuid='{}'".format(recording_name.replace(u"'", u"\\'"), release_name.replace(u"'", u"\\'"), aartist_credit.replace(u"'", u"\\'"), uuid)
-            cur.execute(submit_string)
-
-    db_con.commit()
+    time.sleep(5)
 
     return redirect(url_for("waveplot_display", uuid = uuid))
 
@@ -413,12 +365,17 @@ def waveplot_list(page):
 
     cur = get_cursor(db_con, use_dict = True)
 
-    cur.execute("SELECT waveplot_uuid,cached_recording_name,cached_release_artist FROM tracks WHERE cached_recording_name IS NOT NULL AND cached_release_artist IS NOT NULL ORDER BY cached_recording_name LIMIT {},{}".format(15 * (int(page) - 1), 15))
+    cur.execute("SELECT waveplot_uuid,cached_recording_name,cached_release_artist FROM tracks ORDER BY cached_recording_name LIMIT {},{}".format(15 * (int(page) - 1), 15))
 
     recordings = cur.fetchall()
 
     for recording in recordings:
         recording["image_prefix"] = waveplot_image.waveplot_uuid_to_url_suffix(recording["waveplot_uuid"])
+
+        if (recording["cached_recording_name"] is None) or (recording["cached_release_artist"] is None):
+            lookup_queue.put((0, recording['waveplot_uuid'], 1.0))
+            recording["cached_recording_name"] = "<uncached>"
+            recording["cached_release_artist"] = "<uncached>"
 
     return render_template('main.html', title = "Recordings List", heading = "Recordings List", content = render_template("list.html", recordings = recordings, next_page = str(int(page) + 1)))
 
