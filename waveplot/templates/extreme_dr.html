@@ -1,0 +1,25 @@
+<script>
+    function replace_bad_ca(image) {
+        image.setAttribute("src", "{{ url_for('static', filename='images/missingart.png') }}");
+    }
+</script>
+
+<p>20 Best Dynamic Ranges:</p>
+
+<table>
+{% for release in top %}
+    <tr style="height:30px;">
+    <td style="width: 30px;"><div class="coverartthumb"><img class="coverartsmall" width="30" height="30" src="http://www.coverartarchive.org/release/{{ release['mbid'] }}/front-250" onerror="replace_bad_ca(this)"/></div></td>
+    <td><a href="http://musicbrainz.org/release/{{ release['mbid'] }}">"{{ release['cached_name'] }}"</a> by <a href="{{ url_for('waveplot_artist',name=release['cached_artist']) }}">{{release['short_cached_artist']}}</a> ({{release['dr_level']}})</td></tr>
+{% endfor %}
+</table>
+
+<p>20 Worst Dynamic Ranges:</p>
+
+<table>
+{% for release in bottom %}
+    <tr style="height:30px;">
+    <td style="width: 30px;"><div class="coverartthumb"><img class="coverartsmall" width="30" height="30" src="http://www.coverartarchive.org/release/{{ release['mbid'] }}/front-250" onerror="replace_bad_ca(this)"/></div></td>
+    <td><a href="http://musicbrainz.org/release/{{ release['mbid'] }}">"{{ release['cached_name'] }}"</a> by <a href="{{ url_for('waveplot_artist',name=release['cached_artist']) }}">{{release['short_cached_artist']}}</a> ({{release['dr_level']}})</td></tr>
+{% endfor %}
+</table>
