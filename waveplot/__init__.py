@@ -283,23 +283,12 @@ def extreme_dr():
 
 @app.route("/recache-artist/<name>")
 def recache_artist(name):
-    if db_con is None:
-        return False
-
     cur = get_cursor(db_con)
-    cur.execute(u"SELECT waveplot_uuid, recording_mbid, cached_recording_name, release_mbid, cached_release_name FROM tracks WHERE cached_release_artist LIKE %s LIMIT 1000", ("%{}%".format(name),))
+    cur.execute(u"SELECT waveplot_uuid FROM tracks WHERE cached_release_artist LIKE %s LIMIT 1000", ("%{}%".format(name),))
     rows = cur.fetchall()
 
     for row in rows:
-        result = get_MB_info(row[3], row[1])
-        if result is not None:
-            recording_name, release_name, aartist_credit = result
-
-            if (recording_name != row[2]) or (release_name != row[4]) or (aartist_credit != name):
-                submit_string = u"UPDATE tracks SET cached_recording_name='{}',cached_release_name='{}',cached_release_artist='{}' WHERE waveplot_uuid='{}'".format(recording_name.replace(u"'", u"\\'"), release_name.replace(u"'", u"\\'"), aartist_credit.replace(u"'", u"\\'"), row[0])
-                cur.execute(submit_string)
-
-    db_con.commit()
+        fast_lookup_queue.put((0, row[0], 1.0))
 
     return redirect(url_for("waveplot_artist", name = name))
 
