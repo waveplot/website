@@ -19,10 +19,6 @@ function drawPreview(c, waveplot_data) {
         $("#pvCanvas").css("width",c.width);
     }
 
-    ctx.strokeStyle="#FFFFFF";
-    ctx.fillStyle="#FFFFFF";
-    ctx.fillRect(0,0,c.width,401);
-
     ctx.translate(0.0,0.5);
 
     ctx.strokeStyle="#736DAB";
@@ -47,7 +43,7 @@ $(document).ready(function() {
 
     var wp=document.getElementById("wp_canvas");
 
-    var data_path = "http://pi.ockmore.net:19048" + $("#wp_canvas").attr("data_path");
+    var data_path = $("#wp_canvas").attr("data_path");
 
     $.ajax({
         url: data_path,

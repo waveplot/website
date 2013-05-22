@@ -10,7 +10,9 @@
         <div class="coverart">
             <img class="coverart" width="200" height="200" src="http://www.coverartarchive.org/release/{{ info['data']['release_mbid'] }}/front-250" onerror="replace_bad_ca()"/>
         </div><br/>
-        <div class="albumname">{{ info['data']['cached_release_name'] }}</div>
+        <div class="albumname"><a href="http://musicbrainz.org/release/{{ info['data']['release_mbid'] }}">{{ info['data']['cached_release_name'] }}</a></div>
+        <div class="albumname">Disc {{ info['data']['disc'] }}</div>
+        <div class="albumname">Track {{ info['data']['track'] }}</div>
     </div>
 
     <script src="{{ url_for('static', filename='scripts/waveplot.js') }}"></script>
@@ -36,6 +38,6 @@
        </table>
    </div><br/><br/>
 
-   <div class="centred">Submitted by {{ info['editor'] }} at {{ info['data']['DATE_FORMAT(submit_date,\'%H:%i UTC, %Y-%m-%d\')'] }}<br/><a href="{{ url_for('recache', uuid=info['uuid']) }}">Recache</a></div>
+   <div class="centred">Submitted by <a href="{{ url_for('waveplot_editor', editor_id=info['data']['editor_id'], page=1) }}">{{ info['editor'] }}</a> at {{ info['data']['DATE_FORMAT(submit_date,\'%H:%i UTC, %Y-%m-%d\')'] }}<br/><a href="{{ url_for('recache', uuid=info['uuid']) }}">Recache</a></div>
 
 

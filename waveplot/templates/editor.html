@@ -1,12 +1,14 @@
+<script src="{{ url_for('static', filename='scripts/list.js') }}"></script>
+
 <p>A list of WavePlots submitted by {{ editor_name }}:</p>
 
 <table>
 {% for recording in recordings %}
 
     <tr style="height:30px;">
-    <td style="width:60px;"><img width="50" height="21" src="{{ url_for('static', filename=recording['image_prefix']+'_small.png') }}"/></td>
-    <td><a href="{{ url_for('waveplot_recording',uuid=recording['waveplot_uuid']) }}">"{{ recording['cached_recording_name'] }}"</a> by <a href="{{ url_for('waveplot_artist',name=recording['cached_release_artist']) }}">{{recording['cached_release_artist']}}</a></td></tr>
+    <td style="width:60px;"><canvas class="thumb_canvas" width="50" height="21" data_path="{{ url_for('static', filename= recording['image_prefix']+'_thumb') }}"></canvas></td>
+    <td><a href="{{ url_for('waveplot_display',uuid=recording['waveplot_uuid']) }}">"{{ recording['cached_recording_name'] }}"</a> by <a href="{{ url_for('waveplot_artist',name=recording['cached_release_artist']) }}">{{recording['cached_release_artist']}}</a></td></tr>
 {% endfor %}
 </table>
 
-<div class="centred"><a href="{{ url_for('waveplot_editor',id=editor_id,page=next_page) }}">Next Page</a></div>
+<div class="centred"><a href="{{ url_for('waveplot_editor',editor_id=editor_id,page=next_page) }}">Next Page</a></div>

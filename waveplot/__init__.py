@@ -55,6 +55,30 @@ with open( passwords.MYSQL_PASSWORD_FILE, "r" ) as mysql_pass_file:
 
 db_con = mdb.connect( 'localhost', mysql_user, mysql_pass, 'waveplot', use_unicode=True, charset="utf8" )
 
+def get_cursor(db_con, dict = False):
+    try:
+        if dict:
+            result = db_con.cursor(mdb.cursors.DictCursor)
+        else:
+            result = db_con.cursor()
+
+        result.execute( "USE waveplot")
+        db_con.commit()
+
+        return result
+    except mdb.OperationalError:
+        db_con = mdb.connect( 'localhost', mysql_user, mysql_pass, 'waveplot', use_unicode=True, charset="utf8" )
+
+        if dict:
+            result = db_con.cursor(mdb.cursors.DictCursor)
+        else:
+            result = db_con.cursor()
+
+        result.execute( "USE waveplot")
+        db_con.commit()
+
+        return result
+
 def cookies_enabled( request ):
     enabled = request.cookies.get( 'cookies', False )  # Get cookies cookie - default to False
 
@@ -79,9 +103,6 @@ def waveplot_homepage():
         resp = make_response( render_template( "main.html", title="Welcome to WavePlot!", heading="Welcome to WavePlot!", content=render_template( 'index.html', cookies_enabled=cookies ) ) )
         resp.set_cookie( 'cookies', request.form['cookies'], max_age=31536000 )  # Set an enable cookie for one year. This is only for when the user isn't logged in - otherwise cookie preferences are stored server-side.
     else:
-        if not cookies_enabled( request ):
-            return redirect( url_for( "cookies" ) )
-
         resp = make_response( render_template( "main.html", title="Welcome to WavePlot!", heading="Welcome to WavePlot!", content=render_template( 'index.html', cookies_enabled=True ) ) )
 
     return resp
@@ -189,13 +210,13 @@ def recieve_waveplot():
     if db_con is None:
         return "Database error!"
 
-    cur = db_con.cursor()
+    cur = get_cursor(db_con)
 
     image_hash = calculate_hash( image )
     result = check_for_duplicate( cur, image_hash )
 
     if result is not None:
-        return "WavePlot already in DB! Thanks!"
+        return result
 
     uuid = generate_image_uuid( cur )
     print "Generated image name: " + uuid.hex
@@ -219,11 +240,33 @@ def recieve_waveplot():
 
     recording_name, release_name, aartist_credit = result
 
-    cur.execute( 
+    cur.execute(
         u"INSERT INTO tracks"
         u"(waveplot_uuid,length,trimmed_length,editor_id,recording_mbid,cached_recording_name,release_mbid,cached_release_name,cached_release_artist,track,disc,image_hash,source,num_channels,version,dr_level)"
         u"VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-        ( uuid.hex, secsToHMS( length ), secsToHMS( trimmed ), editor, recording_mbid, recording_name, release_mbid, release_name, aartist_credit, track, disc, image_hash, source, num_channels, VERSION, dr_level ) )
+        ( uuid.hex, secsToHMS( length ), secsToHMS( trimmed ), editor, recording_mbid, recording_name, release_mbid, release_name, aartist_credit, track, disc, image_hash, source, num_channels, VERSION, int(float(dr_level)*10.0) ) )
+
+    cur.execute(u"SELECT waveplot_count FROM recordings WHERE mbid=%s",(recording_mbid,))
+    result = cur.fetchone()
+
+    if result is None:
+        cur.execute(u"INSERT INTO recordings VALUES (%s,%s)", (recording_mbid, 1))
+    else:
+        cur.execute(u"UPDATE recordings SET waveplot_count=%s WHERE mbid=%s", (result[0]+1, recording_mbid))
+
+    cur.execute(u"SELECT tracks, dr_level FROM releases WHERE mbid=%s",(release_mbid,))
+    result = cur.fetchone()
+
+    if result is None:
+        cur.execute(u"INSERT INTO releases (mbid, dr_level, cached_name, cached_artist) VALUES (%s,%s,%s,%s)", (release_mbid, int(float(dr_level)*10.0), release_name, aartist_credit))
+    else:
+        rel_tracks = result[0]
+        rel_dr_level = result[1]
+        rel_dr_level *= rel_tracks
+        rel_dr_level += int(float(dr_level)*10.0)
+        rel_tracks += 1
+        rel_dr_level /= rel_tracks
+        cur.execute(u"UPDATE releases SET dr_level=%s,tracks=%s WHERE mbid=%s", (rel_dr_level, rel_tracks, release_mbid))
 
     db_con.commit()
 
@@ -232,14 +275,14 @@ def recieve_waveplot():
     print "Generated."
     received_waveplot.save()
 
-    return "Upload successful. Thanks for your time!"
+    return uuid.hex
 
 @app.route( "/recache/<uuid>" )
 def recache( uuid ):
     if db_con is None:
         return False
 
-    cur = db_con.cursor()
+    cur = get_cursor(db_con)
     cur.execute( "SELECT recording_mbid, cached_recording_name, release_mbid, cached_release_name, cached_release_artist FROM tracks WHERE waveplot_uuid='{}' LIMIT 1000".format( uuid ) )
     row = cur.fetchone()
 
@@ -253,14 +296,53 @@ def recache( uuid ):
 
     db_con.commit()
 
-    return redirect( url_for( "waveplot_recording", uuid=uuid ) )
+    return redirect( url_for( "waveplot_display", uuid=uuid ) )
+
+@app.route( "/extreme-dr" )
+def extreme_dr():
+    if db_con is None:
+        return False
+
+    cur = get_cursor(db_con, dict = True)
+    cur.execute( "SELECT cached_name, cached_artist, mbid, dr_level FROM releases ORDER BY dr_level DESC LIMIT 20" )
+    top = cur.fetchall()
+
+    for release in top:
+#        track["image_prefix"] = waveplot_image.waveplot_uuid_to_url_suffix( track["waveplot_uuid"] )
+        tmp = str(release["dr_level"])
+        release["dr_level"] = tmp[:-1]+"."+tmp[-1:]
+
+        release["short_cached_artist"] = release["cached_artist"]
+
+        if len(release["cached_name"]) > 30:
+            release["cached_name"] = release["cached_name"][0:30] + u"..."
+        if len(release["cached_artist"]) > 30:
+            release["short_cached_artist"] = release["cached_artist"][0:30] + u"..."
+
+    cur.execute( "SELECT cached_name, cached_artist, mbid, dr_level FROM releases ORDER BY dr_level ASC LIMIT 20" )
+    bottom = cur.fetchall()
+
+    for release in bottom:
+#        track["image_prefix"] = waveplot_image.waveplot_uuid_to_url_suffix( track["waveplot_uuid"] )
+        tmp = str(release["dr_level"])
+        release["dr_level"] = tmp[:-1]+"."+tmp[-1:]
+
+        release["short_cached_artist"] = release["cached_artist"]
+
+        if len(release["cached_name"]) > 30:
+            release["cached_name"] = release["cached_name"][0:30] + u"..."
+        if len(release["cached_artist"]) > 30:
+            release["short_cached_artist"] = release["cached_artist"][0:30] + u"..."
+
+    return render_template( "main.html", title="Extreme DR Levels", heading="Extreme DR Levels", content=render_template( "extreme_dr.html", top=top, bottom=bottom ) )
+
 
 @app.route( "/recache-artist/<name>" )
 def recache_artist( name ):
     if db_con is None:
         return False
 
-    cur = db_con.cursor()
+    cur = get_cursor(db_con)
     cur.execute( u"SELECT waveplot_uuid, recording_mbid, cached_recording_name, release_mbid, cached_release_name FROM tracks WHERE cached_release_artist LIKE %s LIMIT 1000", ( "%{}%".format( name ), ) )
     rows = cur.fetchall()
 
@@ -283,15 +365,9 @@ def waveplot_render( uuid ):
 
 @app.route( "/waveplot/<uuid>" )
 def waveplot_display( uuid ):
-    if not cookies_enabled( request ):
-        return redirect( url_for( "cookies" ) )
+    cur = get_cursor(db_con, dict = True)
 
-    if db_con is None:
-        return "Database Error!"
-
-    cur = db_con.cursor( mdb.cursors.DictCursor )
-
-    cur.execute( "SELECT cached_recording_name, length, recording_mbid, cached_release_artist, trimmed_length, release_mbid, cached_release_name, source, num_channels, DATE_FORMAT(submit_date,'%H:%i UTC, %Y-%m-%d'), editor_id, dr_level FROM tracks WHERE waveplot_uuid ='{}'".format( uuid ) )
+    cur.execute( "SELECT cached_recording_name, length, recording_mbid, track, disc, cached_release_artist, trimmed_length, release_mbid, cached_release_name, source, num_channels, DATE_FORMAT(submit_date,'%H:%i UTC, %Y-%m-%d'), editor_id, dr_level FROM tracks WHERE waveplot_uuid ='{}'".format( uuid ) )
     row = cur.fetchone()
 
     for key in row.keys():
@@ -302,6 +378,8 @@ def waveplot_display( uuid ):
 
     src, bitrate = row['source'].split( "-" )
     bitrate = str( ( int( bitrate ) + 500 ) / 1000 )
+
+    row['dr_level'] = str(float(row['dr_level'])/10.0)
 
     info = {
       "uuid":uuid,
@@ -318,20 +396,14 @@ def waveplot_display( uuid ):
 
 @app.route( "/download" )
 def waveplot_download():
-    if not cookies_enabled( request ):
-        return redirect( url_for( "cookies" ) )
-
     return render_template( "main.html", title="Get Started!", heading="Get Started!", content=render_template( 'download.html' ) )
 
 @app.route( "/recording/<mbid>" )
 def waveplot_recording( mbid ):
-    if not cookies_enabled( request ):
-        return redirect( url_for( "cookies" ) )
-
     if db_con is None:
         return False
 
-    cur = db_con.cursor( mdb.cursors.DictCursor )
+    cur = get_cursor(db_con, dict = True)
 
     cur.execute( "SELECT waveplot_uuid,cached_recording_name,cached_release_artist,track,disc FROM tracks WHERE recording_mbid='{}'".format( mbid ) )
 
@@ -344,14 +416,11 @@ def waveplot_recording( mbid ):
 
 @app.route( "/list/<page>" )
 def waveplot_list( page ):
-    if not cookies_enabled( request ):
-        return redirect( url_for( "cookies" ) )
-
     print repr( mysql_pass )
     if db_con is None:
         return False
 
-    cur = db_con.cursor( mdb.cursors.DictCursor )
+    cur = get_cursor(db_con, dict = True)
 
     cur.execute( "SELECT waveplot_uuid,cached_recording_name,cached_release_artist FROM tracks ORDER BY cached_recording_name LIMIT {},{}".format( 15 * ( int( page ) - 1 ), 15 ) )
 
@@ -364,13 +433,10 @@ def waveplot_list( page ):
 
 @app.route( "/list_rec/<page>" )
 def waveplot_list_rec( page ):
-    if not cookies_enabled( request ):
-        return redirect( url_for( "cookies" ) )
-
     if db_con is None:
         return False
 
-    cur = db_con.cursor( mdb.cursors.DictCursor )
+    cur = get_cursor(db_con, dict = True)
 
     cur.execute( "SELECT COUNT(*) FROM recordings WHERE waveplot_count > 1" )
     count = cur.fetchone()["COUNT(*)"]
@@ -383,36 +449,30 @@ def waveplot_list_rec( page ):
 
 @app.route( "/editor/<editor_id>/<page>" )
 def waveplot_editor( editor_id, page ):
-    if not cookies_enabled( request ):
-        return redirect( url_for( "cookies" ) )
-
     if db_con is None:
         return False
 
-    cur = db_con.cursor( mdb.cursors.DictCursor )
+    cur = get_cursor(db_con, dict = True)
 
-    cur.execute( "SELECT waveplot_uuid,cached_recording_name,cached_release_artist FROM tracks WHERE editor_id={} ORDER BY cached_recording_name LIMIT {},{}".format( editor_id, 15 * ( int( page ) - 1 ), 15 ) )
+    cur.execute( "SELECT waveplot_uuid, cached_recording_name, cached_release_artist FROM tracks WHERE editor_id={} ORDER BY cached_recording_name LIMIT {},{}".format( editor_id, 15 * ( int( page ) - 1 ), 15 ) )
 
     recordings = cur.fetchall()
 
-    cur.execute( "SELECT name FROM editors WHERE id={}".format( id ) )
+    cur.execute( "SELECT name FROM editors WHERE id=%s", (editor_id,) )
 
     editor_name = cur.fetchone()['name']
 
     for recording in recordings:
         recording["image_prefix"] = waveplot_image.waveplot_uuid_to_url_suffix( recording["waveplot_uuid"] )
 
-    return render_template( 'main.html', title="Recordings List", heading="Recordings List", content=render_template( "editor.html", editor_name=editor_name, editor_id=editor_id, recordings=recordings, next_page=str( int( page ) + 1 ) ) )
+    return render_template( 'main.html', title="Recordings List", heading="Editor \"{}\"".format(editor_name), content=render_template( "editor.html", editor_name=editor_name, editor_id=editor_id, recordings=recordings, next_page=str( int( page ) + 1 ) ) )
 
 @app.route( "/artist/<name>" )
 def waveplot_artist( name ):
-    if not cookies_enabled( request ):
-        return redirect( url_for( "cookies" ) )
-
     if db_con is None:
         return False
 
-    cur = db_con.cursor( mdb.cursors.DictCursor )
+    cur = get_cursor(db_con, dict = True)
 
     cur.execute( u"SELECT waveplot_uuid,cached_recording_name,release_mbid,cached_release_name FROM tracks WHERE cached_release_artist LIKE '%{}%' ORDER BY cached_release_name".format( name ) )
 
@@ -434,7 +494,7 @@ def check_track():
     if db_con is None:
         return False
 
-    cur = db_con.cursor()
+    cur = get_cursor(db_con)
 
     sql_string = u"SELECT id FROM tracks WHERE recording_mbid='{}' AND release_mbid='{}' AND track='{}' AND disc='{}'".format( recording_mbid, release_mbid, track_num, disc_num )
     cur.execute( sql_string )
@@ -456,7 +516,7 @@ def waveplot_deleteinvalid( options ):
     if db_con is None:
         return False
 
-    cur = db_con.cursor()
+    cur = get_cursor(db_con)
     cur.execute( "SELECT waveplot_uuid FROM tracks LIMIT 1000" )
     rows = cur.fetchall()
 
@@ -482,7 +542,7 @@ def waveplot_delete( uuid ):
     if db_con is None:
         return False
 
-    cur = db_con.cursor()
+    cur = get_cursor(db_con)
     if cur.execute( "DELETE FROM tracks WHERE waveplot_uuid='{}'".format( uuid ) ) > 0:
         os.remove( waveplot_image.waveplot_uuid_to_filename( uuid ) + ".png" )
         os.remove( waveplot_image.waveplot_uuid_to_filename( uuid ) + "_large.png" )
@@ -497,7 +557,7 @@ def waveplot_activate( key ):
     if db_con is None:
         return False
 
-    cur = db_con.cursor()
+    cur = get_cursor(db_con)
 
     cur.execute( "SELECT name,activated FROM editors WHERE activation_key={}".format( key ) )
     row = cur.fetchone()
@@ -530,7 +590,7 @@ def handle_registration_form( form ):
     if db_con is None:
         return False
 
-    cur = db_con.cursor()
+    cur = get_cursor(db_con)
 
     activation_key = generate_activation_key( cur )
 
@@ -556,7 +616,7 @@ def submit_form():
         if db_con is None:
             return "Database Error!"
 
-        cur = db_con.cursor()
+        cur = get_cursor(db_con)
         cur.execute( "SELECT recording_mbid FROM tracks WHERE recording_mbid='{}'".format( request.form["mbid"] ) )
         row = cur.fetchone()
 

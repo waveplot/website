@@ -2,8 +2,8 @@
 
 <script src="{{ url_for('static', filename='scripts/list.js') }}"></script>
 <script>
-    function replace_bad_ca() {
-        $(".coverartsmall").attr("src", "{{ url_for('static', filename='images/missingart.png') }}");
+    function replace_bad_ca(image) {
+        image.setAttribute("src", "{{ url_for('static', filename='images/missingart.png') }}");
     }
 </script>
 
@@ -13,7 +13,7 @@
       {% set current_release_name = recording['cached_release_name'] %}
       <tr style="height:60px";><td style="width:60px">
           <div class="coverartthumb">
-              <img class="coverartsmall" width="40" height="40" src="http://www.coverartarchive.org/release/{{ recording['release_mbid'] }}/front-250" onerror="replace_bad_ca()"/>
+              <img class="coverartsmall" width="40" height="40" src="http://www.coverartarchive.org/release/{{ recording['release_mbid'] }}/front-250" onerror="replace_bad_ca(this)"/>
           </div>
         </td><td class="albumname">{{ current_release_name }}</td></tr>
     {% endif %}

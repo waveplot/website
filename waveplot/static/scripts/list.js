@@ -19,10 +19,6 @@ function drawThumb(c, waveplot_data) {
         $("#thCanvas").css("width",c.width);
     }
 
-    ctx.strokeStyle="#FFFFFF";
-    ctx.fillStyle="#FFFFFF";
-    ctx.fillRect(0,0,c.width,401);
-
     ctx.translate(0.0,0.5);
 
     ctx.strokeStyle="#736DAB";
@@ -50,8 +46,8 @@ $(document).ready(function() {
 
     for(var i = 0; i != canvases.length; i++) {
 
-        var data_path = "http://pi.ockmore.net:19048" + canvases[i].getAttribute("data_path");
-        //var data_path = canvases[i].getAttribute("data_path");
+        //var data_path = "http://pi.ockmore.net:19048" + canvases[i].getAttribute("data_path");
+        var data_path = canvases[i].getAttribute("data_path");
 
         $.ajax({
             url: data_path,

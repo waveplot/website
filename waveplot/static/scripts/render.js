@@ -99,7 +99,7 @@ $(document).ready(function() {
 
     var wp=document.getElementById("waveplot");
 
-    var data_path = "http://pi.ockmore.net:19048" + $("#waveplot").attr("data_path");
+    var data_path = $("#waveplot").attr("data_path");
 
     $.ajax({
         url: data_path,
