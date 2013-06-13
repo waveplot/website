@@ -48,8 +48,9 @@ class LookupThread(threading.Thread):
     def run(self):
         while True:
             waveplot_uuid, delay_time = self.queue.get()[1:3]
+            print waveplot_uuid,delay_time
             cur = self.get_cursor()
-            cur.execute("SELECT release_mbid,recording_mbid FROM tracks WHERE waveplot_uuid=%s", (waveplot_uuid,))
+            cur.execute("SELECT release_mbid,recording_mbid FROM waveplots WHERE waveplot_uuid=%s", (waveplot_uuid,))
             release_mbid, recording_mbid = cur.fetchone()
             success = True
 
@@ -96,7 +97,7 @@ class LookupThread(threading.Thread):
                     if (release_data is not None) and (recording_data is not None):
                         recording_name = recording_data["title"]
                         print recording_name
-                        cur.execute("UPDATE tracks SET cached_recording_name=%s, cached_release_name=%s, cached_release_artist=%s WHERE waveplot_uuid=%s", (recording_name, release_data[0], release_data[1], waveplot_uuid))
+                        cur.execute("UPDATE waveplots SET cached_recording_name=%s, cached_release_name=%s, cached_release_artist=%s WHERE waveplot_uuid=%s", (recording_name, release_data[0], release_data[1], waveplot_uuid))
                     else:
                         success = False
 

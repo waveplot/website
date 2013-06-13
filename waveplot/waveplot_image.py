@@ -17,9 +17,9 @@ def waveplot_uuid_to_url_suffix( uuid ):
     return "images/waveplots/{}/{}/{}".format( uuid[0:3], uuid[3:6], uuid[6:] )
 
 class WavePlot():
-    def __init__( self, b64_data, uuid ):
-        self.b64_data = b64_data
-        self.data = base64.b64decode( b64_data )
+    def __init__( self, image_data, uuid ):
+        self.b64_data = base64.b64encode(image_data)
+        self.data = image_data
 
         self.uuid = uuid
 

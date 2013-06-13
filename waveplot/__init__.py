@@ -28,12 +28,13 @@ import time
 import MySQLdb as mdb
 import urllib2
 import json
+import zlib
 import hashlib
 from flask import abort, redirect, url_for
 import modules.email
 import modules.passwords as passwords
 import Queue
-
+import datetime
 import waveplot_image
 import musicbrainz_lookup
 
@@ -136,20 +137,19 @@ def generate_image_uuid(db_cur):
     generated_uuid = 0
     while numrows != 0:
         generated_uuid = uuid.uuid4()
-        db_cur.execute("SELECT waveplot_uuid FROM tracks WHERE waveplot_uuid='{}'".format(generated_uuid.hex))
+        db_cur.execute("SELECT waveplot_uuid FROM waveplots WHERE waveplot_uuid='{}'".format(generated_uuid.hex))
         numrows = int(db_cur.rowcount)
 
     return generated_uuid
 
-def calculate_hash(image_data64):
-    m = hashlib.sha1(base64.b64decode(image_data64))
+def calculate_hash(image_data):
+    m = hashlib.sha1(image_data)
     return m.hexdigest()
 
 def check_for_duplicate(db_cur, image_hash):
-    print "SELECT id, waveplot_uuid FROM tracks WHERE image_hash='{}'".format(image_hash)
-    db_cur.execute("SELECT id, waveplot_uuid FROM tracks WHERE image_hash='{}'".format(image_hash))
+    db_cur.execute("SELECT waveplot_uuid FROM waveplots WHERE image_hash=%s",(image_hash,))
     if int(db_cur.rowcount) > 0:
-        return db_cur.fetchone()[1]
+        return db_cur.fetchone()[0]
     else:
         return None
 
@@ -167,7 +167,7 @@ def recieve_waveplot():
     release_mbid = request.form['release']
     track = request.form['track']
     disc = request.form['disc']
-    image = request.form['image']
+    encoded_image = request.form['image']
     source = request.form['source']
     num_channels = request.form['num_channels']
 
@@ -177,6 +177,8 @@ def recieve_waveplot():
     dr_level = request.form['dr_level']
 
     cur = get_cursor(db_con)
+
+    image = zlib.decompress(base64.b64decode(encoded_image))
 
     image_hash = calculate_hash(image)
     result = check_for_duplicate(cur, image_hash)
@@ -198,7 +200,7 @@ def recieve_waveplot():
     editor = result[0]
 
     cur.execute(
-        u"INSERT INTO tracks"
+        u"INSERT INTO waveplots"
         u"(waveplot_uuid,length,trimmed_length,editor_id,recording_mbid,release_mbid,track,disc,image_hash,source,num_channels,version,dr_level)"
         u"VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
         (uuid.hex, secsToHMS(length), secsToHMS(trimmed), editor, recording_mbid, release_mbid, track, disc, image_hash, source, num_channels, VERSION, int(float(dr_level) * 10.0)))
@@ -233,6 +235,65 @@ def recieve_waveplot():
     received_waveplot.save()
 
     return uuid.hex
+
+
+@app.route('/lookup', methods = ['POST'])
+def lookup_waveplot():
+    if "version" not in request.form:
+        return "Need version to proceed! Upload cancelled."
+
+    if request.form['version'] != VERSION:
+        print request.form['version']
+        return "Incorrect version! Lookup cancelled."
+
+    equality_data = {}
+    length_values = ()
+    trimmed_values = ()
+    for key in request.form.keys():
+        if key == 'track':
+            equality_data['track'] = int(request.form['track'])
+        elif key == 'disc':
+            equality_data['disc'] = int(request.form['disc'])
+        elif key == 'num_channels':
+            equality_data['num_channels'] = int(request.form['num_channels'])
+        elif key == 'audio_barcode':
+            equality_data['audio_barcode'] = int(request.form['audio_barcode'])
+        elif key == 'length':
+            base_secs = int(request.form['length'])
+            length_values = (secsToHMS(base_secs-3), secsToHMS(base_secs+3))
+        elif key == 'length':
+            base_secs = int(request.form['trimmed'])
+            trimmed_values = (secsToHMS(base_secs-3), secsToHMS(base_secs+3))
+
+
+
+    cur = get_cursor(db_con)
+
+    #cur.execute("SELECT * FROM waveplots WHERE image_hash=%s", (image_hash,))
+    #row = cur.fetchone()
+
+    #if result is not None:
+        #return json.dumps(result)
+
+    query_str = "SELECT waveplot_uuid FROM waveplots WHERE " \
+    + ("length BETWEEN TIME%s AND TIME%s AND " if len(length_values) != 0 else "") \
+    + ("trimmed_length BETWEEN TIME%s AND TIME%s AND " if len(trimmed_values) != 0 else "") \
+    + "=%s AND ".join(equality_data.keys()) + "=%s"
+    cur.execute(query_str,length_values+trimmed_values+tuple(equality_data.values()))
+    print query_str
+
+
+    results = cur.fetchall()
+
+    result_data = dict([(tupl[0],"") for tupl in results])
+
+    for key in result_data.keys():
+        with open(waveplot_image.waveplot_uuid_to_filename(key)+"_thumb","rb") as wp_file:
+            result_data[key] = wp_file.read()
+
+    return json.dumps(result_data)
+
+
 
 @app.route("/recache/<uuid>")
 def recache(uuid):
@@ -284,7 +345,7 @@ def extreme_dr():
 @app.route("/recache-artist/<name>")
 def recache_artist(name):
     cur = get_cursor(db_con)
-    cur.execute(u"SELECT waveplot_uuid FROM tracks WHERE cached_release_artist LIKE %s LIMIT 1000", ("%{}%".format(name),))
+    cur.execute(u"SELECT waveplot_uuid FROM waveplots WHERE cached_release_artist LIKE %s LIMIT 1000", ("%{}%".format(name),))
     rows = cur.fetchall()
 
     for row in rows:
@@ -300,7 +361,7 @@ def waveplot_render(uuid):
 def waveplot_display(uuid):
     cur = get_cursor(db_con, use_dict = True)
 
-    cur.execute("SELECT cached_recording_name, length, recording_mbid, track, disc, cached_release_artist, trimmed_length, release_mbid, cached_release_name, source, num_channels, DATE_FORMAT(submit_date,'%H:%i UTC, %Y-%m-%d'), editor_id, dr_level FROM tracks WHERE waveplot_uuid ='{}'".format(uuid))
+    cur.execute("SELECT cached_recording_name, length, recording_mbid, track, disc, cached_release_artist, trimmed_length, release_mbid, cached_release_name, source, num_channels, DATE_FORMAT(submit_date,'%H:%i UTC, %Y-%m-%d'), editor_id, dr_level FROM waveplots WHERE waveplot_uuid ='{}'".format(uuid))
     row = cur.fetchone()
 
     for key in row.keys():
@@ -338,7 +399,7 @@ def waveplot_recording(mbid):
 
     cur = get_cursor(db_con, use_dict = True)
 
-    cur.execute("SELECT waveplot_uuid,cached_recording_name,cached_release_artist,track,disc FROM tracks WHERE recording_mbid='{}'".format(mbid))
+    cur.execute("SELECT waveplot_uuid,cached_recording_name,cached_release_artist,track,disc FROM waveplots WHERE recording_mbid='{}'".format(mbid))
 
     recordings = cur.fetchall()
 
@@ -354,7 +415,7 @@ def waveplot_list(page):
 
     cur = get_cursor(db_con, use_dict = True)
 
-    cur.execute("SELECT waveplot_uuid,cached_recording_name,cached_release_artist FROM tracks ORDER BY cached_recording_name LIMIT {},{}".format(15 * (int(page) - 1), 15))
+    cur.execute("SELECT waveplot_uuid,cached_recording_name,cached_release_artist FROM waveplots ORDER BY cached_recording_name LIMIT {},{}".format(15 * (int(page) - 1), 15))
 
     recordings = cur.fetchall()
 
@@ -391,7 +452,7 @@ def waveplot_editor(editor_id, page):
 
     cur = get_cursor(db_con, use_dict = True)
 
-    cur.execute("SELECT waveplot_uuid, cached_recording_name, cached_release_artist FROM tracks WHERE editor_id={} ORDER BY cached_recording_name LIMIT {},{}".format(editor_id, 15 * (int(page) - 1), 15))
+    cur.execute("SELECT waveplot_uuid, cached_recording_name, cached_release_artist FROM waveplots WHERE editor_id={} ORDER BY cached_recording_name LIMIT {},{}".format(editor_id, 15 * (int(page) - 1), 15))
 
     recordings = cur.fetchall()
 
@@ -411,7 +472,7 @@ def waveplot_artist(name):
 
     cur = get_cursor(db_con, use_dict = True)
 
-    cur.execute(u"SELECT waveplot_uuid,cached_recording_name,release_mbid,cached_release_name FROM tracks WHERE cached_release_artist LIKE '%{}%' ORDER BY cached_release_name".format(name))
+    cur.execute(u"SELECT waveplot_uuid,cached_recording_name,release_mbid,cached_release_name FROM waveplots WHERE cached_release_artist LIKE '%{}%' ORDER BY cached_release_name".format(name))
 
     recordings = cur.fetchall()
 
@@ -433,7 +494,7 @@ def check_track():
 
     cur = get_cursor(db_con)
 
-    sql_string = u"SELECT id FROM tracks WHERE recording_mbid='{}' AND release_mbid='{}' AND track='{}' AND disc='{}'".format(recording_mbid, release_mbid, track_num, disc_num)
+    sql_string = u"SELECT waveplot_uuid FROM waveplots WHERE recording_mbid='{}' AND release_mbid='{}' AND track='{}' AND disc='{}'".format(recording_mbid, release_mbid, track_num, disc_num)
     cur.execute(sql_string)
 
     if int(cur.rowcount) > 0:
@@ -454,7 +515,7 @@ def waveplot_deleteinvalid(options):
         return False
 
     cur = get_cursor(db_con)
-    cur.execute("SELECT waveplot_uuid FROM tracks LIMIT 1000")
+    cur.execute("SELECT waveplot_uuid FROM waveplots LIMIT 1000")
     rows = cur.fetchall()
 
     for row in rows:
@@ -468,7 +529,7 @@ def waveplot_deleteinvalid(options):
                 delete = True
 
         if delete:
-            cur.execute("DELETE FROM tracks WHERE waveplot_uuid='{}'".format(row[0]))
+            cur.execute("DELETE FROM waveplots WHERE waveplot_uuid='{}'".format(row[0]))
 
     db_con.commit()
 
@@ -480,7 +541,7 @@ def waveplot_delete(uuid):
         return False
 
     cur = get_cursor(db_con)
-    if cur.execute("DELETE FROM tracks WHERE waveplot_uuid='{}'".format(uuid)) > 0:
+    if cur.execute("DELETE FROM waveplots WHERE waveplot_uuid='{}'".format(uuid)) > 0:
         os.remove(waveplot_image.waveplot_uuid_to_filename(uuid) + ".png")
         os.remove(waveplot_image.waveplot_uuid_to_filename(uuid) + "_large.png")
         os.remove(waveplot_image.waveplot_uuid_to_filename(uuid) + "_small.png")
@@ -554,7 +615,7 @@ def submit_form():
             return "Database Error!"
 
         cur = get_cursor(db_con)
-        cur.execute("SELECT recording_mbid FROM tracks WHERE recording_mbid='{}'".format(request.form["mbid"]))
+        cur.execute("SELECT recording_mbid FROM waveplots WHERE recording_mbid='{}'".format(request.form["mbid"]))
         row = cur.fetchone()
 
         if row is None:
