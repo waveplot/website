@@ -1,4 +1,4 @@
-{
+passwords = {
     "email":
         {
             "username":"",
