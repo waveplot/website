@@ -14,32 +14,24 @@ from waveplot.passwords import passwords
 import waveplot.image
 import waveplot.utils
 
-db_con = db.connect(user=passwords['mysql']['username'], passwd=passwords['mysql']['password'], db='waveplot', use_unicode=True)
-
-CROSS_DOMAIN_ALLOWED = ['http://localhost', 'http://pi.ockmore.net', 'http://waveplot.ockmore.net']
-
-def check_cross_domain(response):
-    origin = request.headers.get('Origin',None)
-    if origin in CROSS_DOMAIN_ALLOWED:
-        response.headers['Access-Control-Allow-Origin'] = origin
-    else:
-        print origin
+db_con = db.connect(host="localhost",user=passwords['mysql']['username'], passwd=passwords['mysql']['password'], db='waveplot', use_unicode = True, charset = "utf8")
 
 def waveplot_list(value):
-    if not db_con.is_connected():
-        db_con.reconnect()
-    else:
-        db_con.commit()
-
-    cur = db_con.cursor()
+    cur = waveplot.utils.get_cursor(db_con)
 
     page = int(request.args.get('page', "1"))
     limit = int(request.args.get('limit', "20"))
+    recording = request.args.get('recording', "")
 
     offset = (page-1)*limit
 
-    query = "SELECT waveplots.uuid, recordings.cached_title, artist_credits.name, waveplots.thumbnail_data FROM waveplots JOIN (recordings,releases,artist_credits) ON (waveplots.recording_mbid=recordings.mbid AND waveplots.release_mbid=releases.mbid AND releases.cached_artist_credit=artist_credits.id) LIMIT %s OFFSET %s"
-    data = (limit,offset)
+    if not recording:
+        query = "SELECT waveplots.uuid, recordings.cached_title, artist_credits.name, waveplots.thumbnail_data FROM waveplots JOIN (recordings,releases,artist_credits) ON (waveplots.recording_mbid=recordings.mbid AND waveplots.release_mbid=releases.mbid AND releases.cached_artist_credit=artist_credits.id) ORDER BY waveplots.submit_date DESC LIMIT %s OFFSET %s"
+        data = (limit,offset)
+    else:
+        query = "SELECT waveplots.uuid, recordings.cached_title, artist_credits.name, waveplots.thumbnail_data FROM waveplots JOIN (recordings,releases,artist_credits) ON (waveplots.recording_mbid=recordings.mbid AND waveplots.release_mbid=releases.mbid AND releases.cached_artist_credit=artist_credits.id) WHERE waveplots.recording_mbid=%s ORDER BY waveplots.submit_date DESC LIMIT %s OFFSET %s"
+        data = (recording,limit,offset)
+
     cur.execute(query,data)
 
     rows = cur.fetchall()
@@ -50,50 +42,57 @@ def waveplot_list(value):
             print result
 
     response = make_response(json.dumps(results))
-    check_cross_domain(response)
+
+    waveplot.utils.check_cross_domain(response)
 
     return response
 
 
 def waveplot_uuid_get(value):
+    cur = waveplot.utils.get_cursor(db_con)
 
-    if not db_con.is_connected():
-        db_con.reconnect()
+    db_columns = [
+        b'waveplots.uuid',
+        b'waveplots.length',
+        b'waveplots.trimmed_length',
+        b'waveplots.recording_mbid',
+        b'waveplots.release_mbid',
+        b'waveplots.source',
+        b'waveplots.num_channels',
+        b'waveplots.dr_level',
+        b'waveplots.audio_barcode',
+        b'waveplots.track',
+        b'waveplots.disc',
+        b'recordings.cached_title',
+        b'artist_credits.name',
+        b'releases.cached_title' ]
 
-    cur = db_con.cursor()
-
-    information = [
-        b'uuid',
-        b'length',
-        b'trimmed_length',
-        b'recording_mbid',
-        b'release_mbid',
-        b'source',
-        b'num_channels',
-        b'dr_level',
-        b'audio_barcode' ]
-
-    query = b"SELECT " + b','.join(information) + b" FROM waveplots WHERE uuid=%s"
+    query = b"SELECT " + b','.join(db_columns) + b" FROM waveplots JOIN (recordings,releases,artist_credits) ON (waveplots.recording_mbid=recordings.mbid AND waveplots.release_mbid=releases.mbid AND releases.cached_artist_credit=artist_credits.id) WHERE uuid=%s"
     data = (value,)
+
+    info = [u'uuid',u'length',u'trimmed_length',u'recording_mbid',u'release_mbid',u'source',u'num_channels',u'dr_level',u'audio_barcode',u'track',u'disc',u'title',u'artist',u'release_title']
 
     cur.execute(query,data)
     rows = cur.fetchall()
 
-    results = dict(zip(information,rows[0]))
-    results['length'] = waveplot.utils.secsToHMS(results['length'].total_seconds())
-    results['trimmed_length'] = waveplot.utils.secsToHMS(results['trimmed_length'].total_seconds())
-    results['dr_level'] = results['dr_level'] / 10
+    results = dict(zip(info,rows[0]))
+    results[u'length'] = waveplot.utils.secsToHMS(results['length'].total_seconds())
+    results[u'trimmed_length'] = waveplot.utils.secsToHMS(results['trimmed_length'].total_seconds())
+    results[u'dr_level'] = results[u'dr_level'] / 10
 
-    results[b'recording']={b'mbid':results[b'recording_mbid']}
-    del(results[b'recording_mbid'])
 
-    results[b'release']={b'mbid':results[b'release_mbid']}
-    del(results[b'release_mbid'])
+    results[u'recording']={u'mbid':results[u'recording_mbid']}
+    del results[u'recording_mbid']
 
-    results[b'preview']=open(waveplot.image.waveplot_uuid_to_filename(value)+"_preview",'rb').read()
+    results[u'release']={u'mbid':results[u'release_mbid'], u'title':results[u'release_title']}
+    del results[u'release_mbid']
+    del results[u'release_title']
+
+    results[u'preview']=open(waveplot.image.waveplot_uuid_to_filename(value)+"_preview",'rb').read()
 
     response = make_response(json.dumps(results))
-    check_cross_domain(response)
+
+    waveplot.utils.check_cross_domain(response)
 
     return response
 
@@ -123,12 +122,9 @@ def waveplot_all(value):
 @app.route('/json/waveplot', methods=['POST'])
 def waveplot_post():
     if request.form.get('version', None) != VERSION:
-        return json.dumps({u'result':u'failure',u'error':u"Incorrect client version or no version provided."})
+        return make_response(json.dumps({u'result':u'failure',u'error':u"Incorrect client version or no version provided."}))
 
-    if not db_con.is_connected():
-        db_con.reconnect()
-
-    cur = db_con.cursor()
+    cur = waveplot.utils.get_cursor(db_con)
 
     f = dict((k,v) for (k,v) in request.form.iteritems())
 
@@ -137,7 +133,7 @@ def waveplot_post():
 
     for a in required_data:
         if a not in f:
-            return json.dumps({u'result':u'failure',u'error':u"Required data not provided. ({})".format(a.encode('ascii'))})
+            return make_response(json.dumps({u'result':u'failure',u'error':u"Required data not provided. ({})".format(a.encode('ascii'))}))
 
     f[b'length'] = int(f[b'length'])
     f[b'trimmed'] = int(f[b'trimmed'])
@@ -152,13 +148,13 @@ def waveplot_post():
     rows = cur.fetchall()
 
     if len(rows) > 0:
-        return json.dumps({u'result':u'success',u'uuid':rows[0][0]})
+        return make_response(json.dumps({u'result':u'success',u'uuid':rows[0][0]}))
 
     cur.execute("SELECT id FROM editors WHERE activation_key=%s", (f['editor'],))
     rows = cur.fetchall()
 
     if len(rows) == 0:
-        return json.dumps({u'result':u'failure',u'error':u"Bad editor key ({})".format(f['editor'])})
+        return make_response(json.dumps({u'result':u'failure',u'error':u"Bad editor key ({})".format(f['editor'])}))
 
     editor = rows[0][0]
 
@@ -206,4 +202,4 @@ def waveplot_post():
 
     image.save(generated_uuid.hex)
 
-    return json.dumps({u'result':u'success',u'uuid':generated_uuid.hex})
+    return make_response(json.dumps({u'result':u'success',u'uuid':generated_uuid.hex}))

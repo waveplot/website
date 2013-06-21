@@ -5,15 +5,34 @@ from __future__ import division, absolute_import
 import mysql.connector as db
 import json
 
-from flask import request
+from flask import request, make_response
 
 from waveplot import app
 from waveplot.passwords import passwords
 
+import waveplot.utils
+
 db_con = db.connect(user=passwords['mysql']['username'], password=passwords['mysql']['password'], database='waveplot')
 
 def recording_list(value):
-    return "list"
+    cur = waveplot.utils.get_cursor(db_con)
+
+    min_linked_waveplots = int(request.args.get('linked-waveplots', "1"))
+    page = int(request.args.get('page', "1"))
+    limit = int(request.args.get('limit', "20"))
+
+    offset = (page-1)*limit
+
+    cur.execute("SELECT mbid, waveplot_count FROM recordings WHERE waveplot_count>=%s ORDER BY waveplot_count DESC LIMIT %s OFFSET %s",(min_linked_waveplots,limit,offset))
+    rows = cur.fetchall()
+
+    results = list({u"mbid":r[0],u'count':r[1]} for r in rows)
+
+    response = make_response(json.dumps(results))
+
+    waveplot.utils.check_cross_domain(response)
+
+    return response
 
 def recording_mbid_get(value):
     if not db_con.is_connected():
