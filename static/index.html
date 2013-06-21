@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" data-ng-app="waveplot">
+    <head>
+        <title>WavePlot</title>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- Bootstrap -->
+
+        <link rel="icon" type="image/ico" href="img/favicon.ico">
+
+        <link rel="stylesheet" href="css/bootstrap.min.css" media="screen" type="text/css">
+
+        <!-- Turns out JQuery is required for $http methods. -->
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.6/angular.min.js"></script>
+        <script src="js/ui-bootstrap-tpls-0.3.0.min.js"></script>
+
+        <script src="js/app.js"></script>
+        <script src="js/controllers.js"></script>
+    </head>
+
+    <body data-ng-controller="MainCtrl">
+        <div class="container" style="margin-top:5%">
+            <div class="row">
+                <div class="span4">
+               <div class="text-center"><img src="img/waveplot.png" alt="WavePlot Logo" width="200" height="200" /></div><br/>
+
+                    <ul class="nav nav-pills nav-stacked">
+                        <li data-ng-repeat="navlink in navlinks" data-ng-class="navlink.active" data-ng-click="setRoute(navlink.id)"><a href="">{{navlink.title}}</a></li>
+                    </ul>
+
+               <!--input type="text" class="input-xlarge search-query" data-ng-model="search"/>
+                    <br/-->
+
+                </div>
+                <div class="span8" style="text-align:justify;" data-ng-view>
+               <noscript>
+                   <div class="alert">
+                      <center><strong><a href="http://simple.wikipedia.org/wiki/JavaScript">JavaScript</a> disabled!</strong> Please use a JavaScript-enabled browser to view this site.</center>
+                   </div>
+                   </noscript>
+            </div>
+         </div>
+      </div>
+    </body>
+</html>

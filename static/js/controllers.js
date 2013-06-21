@@ -1,0 +1,186 @@
+'use strict';
+
+function HomeCtrl($scope) {
+}
+
+function ExtremeDRCtrl($scope, $http){
+   delete $http.defaults.headers.common['X-Requested-With'];
+
+   $scope.panes = [{}];
+
+   $http.get('http://localhost:19048/json/extreme-dr').success(function (data) {
+      $scope.highest = data.highest;
+      $scope.lowest = data.lowest;
+   });
+
+
+}
+
+function GetStartedCtrl($scope){
+   $scope.panes = [{}];
+}
+
+function WavePlotUUIDCtrl($scope, $routeParams, $http){
+   delete $http.defaults.headers.common['X-Requested-With'];
+
+   $scope.uuid = $routeParams.uuid;
+   $scope.element = { "data":"" };
+   $scope.data = { "release":{"mbid":""} };
+   $http.get('http://localhost:19048/json/waveplot/'+$scope.uuid).success(function (data) {
+      $scope.data = data;
+
+      $scope.data.source = $scope.data.source.toUpperCase();
+      if($scope.data.source.indexOf("FLAC") != -1)
+      {
+         $scope.data.source = $scope.data.source.substr(0,4);
+      }
+
+      $scope.element = {
+         "uuid":$scope.uuid,
+         "data":data.preview
+      };
+   });
+}
+
+function WavePlotListCtrl($scope, $routeParams, $location, $http){
+   delete $http.defaults.headers.common['X-Requested-With'];
+
+	$scope.page = 1;
+
+	$scope.displayWavePlot = function (uuid) {
+   		$location.path("/waveplot/"+uuid);
+	};
+
+	$scope.$watch('page', function(val) {
+		if(val > 0) {
+		 	$http.get('http://localhost:19048/json/waveplot/list?page='+val).success(function (data) {
+       		$scope.listelements = data;
+       		$scope.valid_results = $scope.listelements.length;
+
+       		for(var i = 0; i != $scope.listelements.length; i++){
+       		   if($scope.listelements[i].title == null) {
+       		      $scope.listelements[i].title = "<"+$scope.listelements[i].uuid+">";
+       		      $scope.listelements[i].style = { 'font-family': '"Courier New", Courier, monospace' }
+       		   }
+       	      if($scope.listelements[i].artist == null) {
+       		      $scope.listelements[i].artist = "<uncached>";
+       		   }
+
+       	      $scope.listelements[i].valid = true;
+       		}
+
+
+            while($scope.listelements.length < 20){
+               $scope.listelements.push({
+                  "uuid":"",
+                  "title":"",
+                  "artist":"",
+                  "data":"",
+                  "valid":false });
+        	   }
+         });
+	 	} else {
+	 		$scope.page = 1;
+	 	}
+ 	},true);
+}
+
+function RecordingMBIDCtrl($scope,$routeParams,$location,$http){
+   delete $http.defaults.headers.common['X-Requested-With'];
+
+   $scope.mbid = $routeParams.mbid;
+
+	$scope.page = 1;
+
+	$scope.displayWavePlot = function (uuid) {
+   		$location.path("/waveplot/"+uuid);
+	};
+
+   $scope.$watch('page', function(val) {
+		if(val > 0) {
+		 	$http.get('http://localhost:19048/json/waveplot/list?page='+val+'&recording='+$scope.mbid).success(function (data) {
+       		$scope.listelements = data;
+       		$scope.valid_results = $scope.listelements.length;
+
+       		for(var i = 0; i != $scope.listelements.length; i++){
+       		   if($scope.listelements[i].title == null) {
+       		      $scope.listelements[i].title = "<"+$scope.listelements[i].uuid+">";
+       		      $scope.listelements[i].style = { 'font-family': '"Courier New", Courier, monospace' }
+       		   }
+       	      if($scope.listelements[i].artist == null) {
+       		      $scope.listelements[i].artist = "<uncached>";
+       		   }
+
+       	      $scope.listelements[i].valid = true;
+       		}
+
+
+            while($scope.listelements.length < 20){
+               $scope.listelements.push({
+                  "uuid":"",
+                  "title":"",
+                  "artist":"",
+                  "data":"",
+                  "valid":false });
+        	   }
+         });
+	 	} else {
+	 		$scope.page = 1;
+	 	}
+ 	},true);
+}
+
+function RecordingListCtrl($scope,$location,$http){
+   delete $http.defaults.headers.common['X-Requested-With'];
+
+   $scope.num_links = 2;
+   $scope.page = 1;
+
+   $scope.displayRecording = function (mbid) {
+   		$location.path("/recording/"+mbid);
+	};
+
+   $scope.$watch('page', function(val) {
+		if(val > 0) {
+		 	$http.get('http://localhost:19048/json/recording/list?linked-waveplots='+$scope.num_links+'&page='+val).success(function (data) {
+       		$scope.listelements = data;
+         });
+	 	} else {
+	 		$scope.page = 1;
+	 	}
+ 	},true);
+
+ 	$scope.$watch('num_links', function(val) {
+	 	$http.get('http://localhost:19048/json/recording/list?linked-waveplots='+val+'&page='+$scope.page).success(function (data) {
+    		$scope.listelements = data;
+      });
+      $scope.page = 1;
+ 	},true);
+}
+
+function RegisterCtrl($scope,$http){
+   delete $http.defaults.headers.common['X-Requested-With'];
+   $http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
+
+   $scope.input_error = false;
+   $scope.email = "";
+   $scope.submitted = false;
+
+   $scope.submit = function(){
+      if ((typeof $scope.email == 'undefined') || ($scope.email == '')) {
+         $scope.input_error = true;
+      } else {
+         $scope.input_error = false;
+         $scope.submitted = true;
+         $http.post('http://localhost:19048/json/editor',"username="+$scope.username+"&email="+$scope.email).success(function(data) {
+            if(data.result == 'success'){
+               $scope.result = {"class":"alert-success","text":"Successfully registered! Please await your activation email!"};
+            } else {
+               $scope.result = {"class":"alert-error","text":data.error};
+            }
+
+         });
+      }
+   };
+
+}

@@ -1,0 +1,16 @@
+<h3>A List of Recordings</h3>
+
+<p>A list of MusicBrainz Recordings linked to at least &nbsp;<input class="span1" type="number" name="quantity" min="1" max="5" data-ng-model="num_links"/> &nbsp;<ng-pluralize count="num_links" when="{one:'WavePlot',other:'WavePlots'}"></ng-pluralize> on the server:</p>
+
+<ul>
+   <li ng-repeat="element in listelements" height="30">
+      <a href="" ng-click="displayRecording(element.mbid); setRoute(-1)" style='font-family: "Courier New", Courier, monospace'>{{element.mbid}}</a>
+   </li>
+</ul>
+
+<div class="pagination-centered">
+   <div class="btn-group">
+      <button class="btn" ng-click="page = page - 1" ng-disabled="page == 1">&larr;</button>
+      <button class="btn" ng-click="page = page + 1" ng-disabled="listelements.length < 20">&rarr;</button>
+   </div>
+</div>

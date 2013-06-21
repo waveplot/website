@@ -1,0 +1,35 @@
+<script>
+    function replace_bad_ca(image) {
+        image.setAttribute("src", "img/missingart_thumb.png");
+    }
+</script>
+
+<h3>Extreme Dynamic Range</h3>
+<p>This page shows the releases in the database with the best and the worst dynamic range.
+Dynamic range is a measure of the quality of music, and how much variation there is between the quieter parts and the noisier parts.
+In recent years, production has focused on applying more and more compression to music.
+The aim of this is to make songs sound louder in an attempt make them stand out, but it actually reduces sound quality and fidelity, and lowers the dynamic range.</p>
+
+<tabs>
+   <pane heading="Best">
+      <h4>10 Releases with Best Dynamic Range:</h4>
+
+      <table>
+         <tr height="40" ng-repeat="release in highest">
+            <td style="width: 30px;"><img width="30" height="30" src="http://www.coverartarchive.org/release/{{release.mbid}}/front-250" onerror="replace_bad_ca(this)"/></td>
+            <td><a href="http://musicbrainz.org/release/{{release.mbid}}">"{{release.title}}"</a> by <a href="">{{release.artist}}</a> <i>{{release.dr_level.toFixed(1)}}</i></td></tr>
+         </tr>
+      </table>
+   </pane>
+
+   <pane heading="Worst" active="panes[0].active">
+      <h4>10 Releases with Worst Dynamic Range:</h4>
+
+      <table>
+         <tr height="40" ng-repeat="release in lowest">
+            <td style="width: 30px;"><img width="30" height="30" src="http://www.coverartarchive.org/release/{{release.mbid}}/front-250" onerror="replace_bad_ca(this)"/></td>
+            <td><a href="http://musicbrainz.org/release/{{release.mbid}}">"{{release.title}}"</a> by <a href="">{{release.artist}}</a> <i>{{release.dr_level.toFixed(1)}}</i></td></tr>
+         </tr>
+      </table>
+   </pane>
+</tabs>
