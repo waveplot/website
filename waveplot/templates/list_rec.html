@@ -1,9 +1,0 @@
-<p>Found {{ count }} MB Recordings with more than 1 WavePlot:</p>
-
-<ul>
-{% for recording in recordings %}
-    <li class="uuid"><a href="{{ url_for('waveplot_recording',mbid=recording['mbid']) }}">{{ recording['mbid'] }}</a></li>
-{% endfor %}
-</ul>
-
-<div class="centred"><a href="{{ url_for('waveplot_list_rec',page=next_page) }}">Next Page</a></div>
