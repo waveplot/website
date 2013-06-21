@@ -28,6 +28,7 @@ def start_lookup_thread():
 import waveplot.json.recording
 import waveplot.json.waveplot
 import waveplot.json.release
+import waveplot.json.editor
 
 @app.route("/")
 def home():
