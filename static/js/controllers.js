@@ -27,18 +27,23 @@ function WavePlotUUIDCtrl($scope, $routeParams, $http){
    $scope.element = { "data":"" };
    $scope.data = { "release":{"mbid":""} };
    $http.get('http://localhost:19048/json/waveplot/'+$scope.uuid).success(function (data) {
-      $scope.data = data;
+      if(data.result == "success"){
+         $scope.data = data.waveplot;
 
-      $scope.data.source = $scope.data.source.toUpperCase();
-      if($scope.data.source.indexOf("FLAC") != -1)
-      {
-         $scope.data.source = $scope.data.source.substr(0,4);
+         $scope.data.source = $scope.data.source.toUpperCase();
+         if($scope.data.source.indexOf("FLAC") != -1)
+         {
+            $scope.data.source = $scope.data.source.substr(0,4);
+         }
+
+         $scope.element = {
+            "uuid":$scope.uuid,
+            "data":data.preview
+         };
+      } else {
+         //Todo - deal with this.
+         $scope.data = "Blob."
       }
-
-      $scope.element = {
-         "uuid":$scope.uuid,
-         "data":data.preview
-      };
    });
 }
 

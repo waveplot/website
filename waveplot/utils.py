@@ -29,7 +29,7 @@ def get_cursor(db_con, use_dict = False):
 
         return result
     except db.OperationalError:
-        db_con = db.connect(host="localhost",user=passwords['mysql']['username'], passwd=passwords['mysql']['password'], db='waveplot', use_unicode = True, charset = "utf8")
+        db_con = db.connect(host = "localhost", user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
 
         if use_dict:
             result = db_con.cursor(db.cursors.DictCursor)
@@ -41,21 +41,9 @@ def get_cursor(db_con, use_dict = False):
 
         return result
 
-CROSS_DOMAIN_ALLOWED = ['http://localhost', 'http://pi.ockmore.net', 'http://waveplot.ockmore.net']
-
-def check_cross_domain(response):
-    origin = request.headers.get('Origin',None)
-
-    if origin in CROSS_DOMAIN_ALLOWED:
-        response.headers['Access-Control-Allow-Origin'] = origin
-        return True
-
-    return False
-
-
-def crossdomain(origin=None, methods=None, headers=None,
-                max_age=21600, attach_to_all=True,
-                automatic_options=True):
+def crossdomain(origin = None, methods = None, headers = None,
+                max_age = 21600, attach_to_all = True,
+                automatic_options = True):
     if methods is not None:
         methods = ', '.join(sorted(x.upper() for x in methods))
     if headers is not None and not isinstance(headers, basestring):

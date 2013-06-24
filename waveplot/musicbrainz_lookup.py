@@ -18,44 +18,44 @@ class LookupThread(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
-        self.db_con = db.connect(host="localhost",user=passwords['mysql']['username'], passwd=passwords['mysql']['password'], db='waveplot', use_unicode = True, charset = "utf8")
+        self.db_con = db.connect(host = "localhost", user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
         self.recent_release_lookups = OrderedDict()
         self.recent_recording_lookups = deque()
+        self._stop = threading.Event()
 
     def _add_or_update_artist_credit_(self, release_artist_credits):
         cur = waveplot.utils.get_cursor(self.db_con)
 
         artist_credit_name = u''.join((artist_credit[u'name'] + artist_credit[u'joinphrase']) for artist_credit in release_artist_credits)
 
-        cur.execute("SELECT id FROM artist_credits WHERE name=%s",(artist_credit_name,))
+        cur.execute("SELECT id FROM artist_credits WHERE name=%s", (artist_credit_name,))
 
-        #Fill possible matches with all ids that match the initial conditions
+        # Fill possible matches with all ids that match the initial conditions
         rows = cur.fetchall()
 
-        #If there are no matches left, make a new credit and create artist-artist credit links
-        #If there are matches, update all artist-artist credit links
+        # If there are no matches left, make a new credit and create artist-artist credit links
+        # If there are matches, update all artist-artist credit links
 
         if not rows:
-            cur.execute("INSERT INTO artist_credits (name) VALUES(%s)",(artist_credit_name,))
+            cur.execute("INSERT INTO artist_credits (name) VALUES(%s)", (artist_credit_name,))
             self.db_con.commit()
-            cur.execute("SELECT id FROM artist_credits WHERE name=%s",(artist_credit_name,))
+            cur.execute("SELECT id FROM artist_credits WHERE name=%s", (artist_credit_name,))
             artist_credit_id = cur.fetchall()[0][0]
-            print repr(artist_credit_name)
         else:
             artist_credit_id = rows[0][0]
 
-        for i in xrange(0,len(release_artist_credits)):
+        for i in xrange(0, len(release_artist_credits)):
             artist_credit = release_artist_credits[i]
-            cur.execute("REPLACE artists VALUES(%s,%s)",(artist_credit[u'artist'][u'id'],artist_credit[u'artist'][u'name']))
+            cur.execute("REPLACE artists VALUES(%s,%s)", (artist_credit[u'artist'][u'id'], artist_credit[u'artist'][u'name']))
 
             query = "REPLACE artist_artist_credit VALUES(%s,%s,%s,%s,%s)"
             data = (artist_credit_id, artist_credit[u'artist'][u'id'], artist_credit[u'name'], i, artist_credit[u'joinphrase'])
 
-            cur.execute(query,data)
+            cur.execute(query, data)
             self.db_con.commit()
 
-        #Finally, update the artist credit picture using the google result if it's not user set (currently unimplemented)
-        #Return the credit id
+        # Finally, update the artist credit picture using the google result if it's not user set (currently unimplemented)
+        # Return the credit id
         return artist_credit_id
 
     def _cache_releases_(self):
@@ -70,33 +70,32 @@ class LookupThread(threading.Thread):
                 r = requests.get("http://musicbrainz.org/ws/2/release/{}?inc=recordings&fmt=json".format(result[0]))
 
                 release_data = r.json()
-                print release_data
 
                 if result[0] == release_data[u'id']:
-                    cur.execute("UPDATE releases SET cached_title=%s WHERE mbid=%s",(release_data[u'title'],result[0]))
+                    cur.execute("UPDATE releases SET cached_title=%s WHERE mbid=%s", (release_data[u'title'], result[0]))
                 else:
-                    #Check that this release isn't already separately in the table.
-                    cur.execute("SELECT mbid FROM releases WHERE mbid=%s",(release_data[u'id'],))
+                    # Check that this release isn't already separately in the table.
+                    cur.execute("SELECT mbid FROM releases WHERE mbid=%s", (release_data[u'id'],))
                     if cur.fetchone() is not None:
-                        #Delete this recording
-                        cur.execute("DELETE FROM releases WHERE mbid=%s",(result[0],))
+                        # Delete this recording
+                        cur.execute("DELETE FROM releases WHERE mbid=%s", (result[0],))
                     else:
-                        #Update this recording
-                        cur.execute("UPDATE releases SET cached_title=%s,mbid=%s WHERE mbid=%s",(release_data[u'title'],release_data[u'id'],result[0]))
+                        # Update this recording
+                        cur.execute("UPDATE releases SET cached_title=%s,mbid=%s WHERE mbid=%s", (release_data[u'title'], release_data[u'id'], result[0]))
 
-                    #Redirect waveplot
-                    cur.execute("UPDATE waveplots SET release_mbid=%s WHERE release_mbid=%s",(release_data[u'id'],result[0]))
+                    # Redirect waveplot
+                    cur.execute("UPDATE waveplots SET release_mbid=%s WHERE release_mbid=%s", (release_data[u'id'], result[0]))
                 self.db_con.commit()
 
                 for medium in release_data[u'media']:
                     for track in medium[u'tracks']:
-                        #Update track and recording information
+                        # Update track and recording information
                         recording = track[u'recording']
-                        cur.execute("UPDATE recordings SET cached_title=%s WHERE mbid=%s",(recording[u'title'],recording[u'id']))
+                        cur.execute("UPDATE recordings SET cached_title=%s WHERE mbid=%s", (recording[u'title'], recording[u'id']))
 
-                        #Check that recording and track mbids are correct for disc/track pair
-                        #cur.execute("SELECT * FROM waveplots WHERE recording_mbid=%s AND release_mbid=%s",(recording[u'id'],release_data[u'id']))
-                        #cur.execute("UPDATE tracks SET cached_title=%s WHERE mbid=%s",(track[u'title'],track[u'id']))
+                        # Check that recording and track mbids are correct for disc/track pair
+                        # cur.execute("SELECT * FROM waveplots WHERE recording_mbid=%s AND release_mbid=%s",(recording[u'id'],release_data[u'id']))
+                        # cur.execute("UPDATE tracks SET cached_title=%s WHERE mbid=%s",(track[u'title'],track[u'id']))
 
                         self.db_con.commit()
 
@@ -109,12 +108,12 @@ class LookupThread(threading.Thread):
 
         try:
             for result in results:
-                #Get artist credits! Yay!
+                # Get artist credits! Yay!
                 r = requests.get("http://musicbrainz.org/ws/2/release/{}?inc=artist-credits&fmt=json".format(result[0]))
                 release_artist_credits = r.json()[u'artist-credit']
 
                 artist_credit_id = self._add_or_update_artist_credit_(release_artist_credits)
-                cur.execute("UPDATE releases SET cached_artist_credit=%s WHERE mbid=%s",(artist_credit_id,result[0]))
+                cur.execute("UPDATE releases SET cached_artist_credit=%s WHERE mbid=%s", (artist_credit_id, result[0]))
                 self.db_con.commit()
 
                 time.sleep(1)
@@ -135,19 +134,19 @@ class LookupThread(threading.Thread):
                 recording_data = r.json()
 
                 if result[0] == recording_data[u'id']:
-                    cur.execute("UPDATE recordings SET cached_title=%s WHERE mbid=%s",(recording_data[u'title'],result[0]))
+                    cur.execute("UPDATE recordings SET cached_title=%s WHERE mbid=%s", (recording_data[u'title'], result[0]))
                 else:
-                    #Check that this recording isn't already separately in the table.
-                    cur.execute("SELECT mbid FROM recordings WHERE mbid=%s",(recording_data[u'id'],))
+                    # Check that this recording isn't already separately in the table.
+                    cur.execute("SELECT mbid FROM recordings WHERE mbid=%s", (recording_data[u'id'],))
                     if cur.fetchone() is not None:
-                        #Delete this recording
-                        cur.execute("DELETE FROM recordings WHERE mbid=%s",(result[0],))
+                        # Delete this recording
+                        cur.execute("DELETE FROM recordings WHERE mbid=%s", (result[0],))
                     else:
-                        #Update this recording
-                        cur.execute("UPDATE recordings SET cached_title=%s,mbid=%s WHERE mbid=%s",(recording_data[u'title'],recording_data[u'id'],result[0]))
+                        # Update this recording
+                        cur.execute("UPDATE recordings SET cached_title=%s,mbid=%s WHERE mbid=%s", (recording_data[u'title'], recording_data[u'id'], result[0]))
 
-                    #Redirect waveplot
-                    cur.execute("UPDATE waveplots SET recording_mbid=%s WHERE recording_mbid=%s",(recording_data[u'id'],result[0]))
+                    # Redirect waveplot
+                    cur.execute("UPDATE waveplots SET recording_mbid=%s WHERE recording_mbid=%s", (recording_data[u'id'], result[0]))
 
                 self.db_con.commit()
                 time.sleep(1)
@@ -156,17 +155,20 @@ class LookupThread(threading.Thread):
 
 
     def run(self):
-        while True:
+        while not self._stop.is_set():
             print "Running caching loop!"
-            #Cache any releases missing data, and correct merges
+            # Cache any releases missing data, and correct merges
             self._cache_releases_()
 
-            #Cache any recordings missing data, and correct merges
+            # Cache any recordings missing data, and correct merges
             self._cache_recordings_()
 
             time.sleep(60)
 
-#Unused stuff - will be needed for recaching support.
+    def stop(self):
+        self._stop.set()
+
+# Unused stuff - will be needed for recaching support.
     def unused(self):
         try:
             if release_mbid not in self.recent_release_lookups:
