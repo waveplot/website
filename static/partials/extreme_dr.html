@@ -13,6 +13,8 @@ The aim of this is to make songs sound louder in an attempt make them stand out,
 <tabs>
    <pane heading="Best">
       <h4>10 Releases with Best Dynamic Range:</h4>
+      
+      <div  data-ng-hide="loaded" class="text-center"><img src="/img/ajax-loader.gif" alt=""></img></br></br></div>
 
       <table>
          <tr height="40" ng-repeat="release in highest">
@@ -24,7 +26,7 @@ The aim of this is to make songs sound louder in an attempt make them stand out,
 
    <pane heading="Worst" active="panes[0].active">
       <h4>10 Releases with Worst Dynamic Range:</h4>
-
+      
       <table>
          <tr height="40" ng-repeat="release in lowest">
             <td style="width: 30px;"><img width="30" height="30" src="http://www.coverartarchive.org/release/{{release.mbid}}/front-250" onerror="replace_bad_ca(this)"/></td>

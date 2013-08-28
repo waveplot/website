@@ -3,34 +3,33 @@
 <tabs>
    <pane heading="Windows">
       <p>
-      To get started with WavePlot, you'll need to download a few files:
+      There are two ways to obtain WavePlot for Windows.
+      </p>
+      
+      <h4>Binaries</h4>
+      <p>
+      Firstly, you can download an installer which will install the WavePlot Imager and the scanning script into a directory of your choosing. This is available <a href="/downloads/WavePlot for Windows.exe">here</a>. Please note, you'll need to install Python 2.7 and the Python packages mutagen and Requests to use the provided scanner script.
       </p>
 
-      <ul>
-         <li>The WavePlot Imager
-            <ul>
-               <li><a href="/static/win32/WavePlotImager.zip">Windows x86 Binary (for 32 or 64 bit systems)</a></li>
-               <li><a href="/static/source-win32.zip">Source Code with Makefile for MinGW32 on Windows</a></li>
-               <li>You'll need to download and install libavcodec, libavformat, libavutils (<a href="http://ffmpeg.org/download.html">http://ffmpeg.org/download.html</a>) and <a href="http://www.libpng.org/pub/png/libpng.html">libpng</a> to compile from source.</li>
-            </ul>
-         </li>
-
-        <li><a href="https://raw.github.com/LordSputnik/waveplot-client/alpha/scanner/scanner.py">The WavePlot Scanner</a>
-            <ul>
-                <li>You'll first need to install <a href="http://www.python.org/download/releases/2.7/">Python 2.7</a>.</li>
-                <li>Then you'll need to download and install the "mutagen" and "requests" python packages.</li>
-            </ul>
-        </li>
-      </ul>
-
+      <h4>Source Code</h4>
       <p>
-      Once you have both of the WavePlot downloads and their dependencies, place WavePlotImager.exe and scanner.py in a folder.
-      Navigate to the directory with the files you want to analyse for WavePlots, and open a command prompt or terminal.
+      The second way is to compile the source code yourself. You can download the source files from GitHub using <a href="http://github.com/LordSputnik/waveplot-client/archive/master.zip">this link</a>.
+      You'll need to install <a href="http://www.mingw.org/">MinGW</a> and <a href="/downloads/libav-0.8.7.tar.gz">libav 0.8.7</a> to compile on Windows, and once again, you'll need <a href="http://www.python.org/">Python 2.7</a> and the packages mutagen and Requests to run the scanning script.
+      </p>
+      
+      <h4>Using</h4>
+      <p>
+      Once you've installed WavePlot, navigate to the directory with the files you want to analyse for WavePlots, and open a command prompt or terminal.
       Then, in the command prompt or terminal, type "&#60;path_to_scanner&#62;&#47;scanner.py", replacing &#60;path_to_scanner&#62; with the directory containing scanner.py and WavePlotImager
       </p>
 
       <p>
       At this point, email me if it all goes wrong. :)
+      </p>
+      
+      <h4>Licensing</h4>
+      <p>
+      WavePlot is licensed under the terms of the LGPLv3. This software uses code of <a href=http://libav.org>Libav</a> licensed under the <a href=http://www.gnu.org/licenses/lgpl.html>LGPLv3</a> and its source can be downloaded <a href="/downloads/libav-0.8.7.tar.gz">here</a>.
       </p>
    </pane>
 

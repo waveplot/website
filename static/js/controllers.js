@@ -1,5 +1,7 @@
 'use strict';
 
+var server = 'http://pi.ockmore.net:19048';
+
 function HomeCtrl($scope) {
 }
 
@@ -7,8 +9,10 @@ function ExtremeDRCtrl($scope, $http){
    delete $http.defaults.headers.common['X-Requested-With'];
 
    $scope.panes = [{}];
+   $scope.loaded = false;
 
-   $http.get('http://localhost:19048/json/extreme-dr').success(function (data) {
+   $http.get(server+'/json/extreme-dr').success(function (data) {
+      $scope.loaded = true;
       $scope.highest = data.highest;
       $scope.lowest = data.lowest;
    });
@@ -26,7 +30,7 @@ function WavePlotUUIDCtrl($scope, $routeParams, $http){
    $scope.uuid = $routeParams.uuid;
    $scope.element = { "data":"" };
    $scope.data = { "release":{"mbid":""} };
-   $http.get('http://localhost:19048/json/waveplot/'+$scope.uuid).success(function (data) {
+   $http.get(server+'/json/waveplot/'+$scope.uuid).success(function (data) {
       if(data.result == "success"){
          $scope.data = data.waveplot;
 
@@ -38,7 +42,7 @@ function WavePlotUUIDCtrl($scope, $routeParams, $http){
 
          $scope.element = {
             "uuid":$scope.uuid,
-            "data":data.preview
+            "data":$scope.data.preview
          };
       } else {
          //Todo - deal with this.
@@ -50,6 +54,7 @@ function WavePlotUUIDCtrl($scope, $routeParams, $http){
 function WavePlotListCtrl($scope, $routeParams, $location, $http){
    delete $http.defaults.headers.common['X-Requested-With'];
 
+  $scope.loaded = false;
 	$scope.page = 1;
 
 	$scope.displayWavePlot = function (uuid) {
@@ -58,7 +63,10 @@ function WavePlotListCtrl($scope, $routeParams, $location, $http){
 
 	$scope.$watch('page', function(val) {
 		if(val > 0) {
-		 	$http.get('http://localhost:19048/json/waveplot/list?page='+val).success(function (data) {
+      $scope.loaded = false;
+      $scope.listelements = undefined;
+      
+		 	$http.get(server+'/json/waveplot/list?page='+val).success(function (data) {
        		$scope.listelements = data;
        		$scope.valid_results = $scope.listelements.length;
 
@@ -83,6 +91,8 @@ function WavePlotListCtrl($scope, $routeParams, $location, $http){
                   "data":"",
                   "valid":false });
         	   }
+             
+             $scope.loaded = true;
          });
 	 	} else {
 	 		$scope.page = 1;
@@ -103,7 +113,7 @@ function RecordingMBIDCtrl($scope,$routeParams,$location,$http){
 
    $scope.$watch('page', function(val) {
 		if(val > 0) {
-		 	$http.get('http://localhost:19048/json/waveplot/list?page='+val+'&recording='+$scope.mbid).success(function (data) {
+		 	$http.get(server+'/json/waveplot/list?page='+val+'&recording='+$scope.mbid).success(function (data) {
        		$scope.listelements = data;
        		$scope.valid_results = $scope.listelements.length;
 
@@ -140,6 +150,7 @@ function RecordingListCtrl($scope,$location,$http){
 
    $scope.num_links = 2;
    $scope.page = 1;
+   $scope.loaded = false;
 
    $scope.displayRecording = function (mbid) {
    		$location.path("/recording/"+mbid);
@@ -147,8 +158,11 @@ function RecordingListCtrl($scope,$location,$http){
 
    $scope.$watch('page', function(val) {
 		if(val > 0) {
-		 	$http.get('http://localhost:19048/json/recording/list?linked-waveplots='+$scope.num_links+'&page='+val).success(function (data) {
+      $scope.listelements = undefined;
+      $scope.loaded = false;
+		 	$http.get(server+'/json/recording/list?linked-waveplots='+$scope.num_links+'&page='+val).success(function (data) {
        		$scope.listelements = data;
+          $scope.loaded = true;
          });
 	 	} else {
 	 		$scope.page = 1;
@@ -156,8 +170,11 @@ function RecordingListCtrl($scope,$location,$http){
  	},true);
 
  	$scope.$watch('num_links', function(val) {
-	 	$http.get('http://localhost:19048/json/recording/list?linked-waveplots='+val+'&page='+$scope.page).success(function (data) {
+    $scope.listelements = undefined;
+    $scope.loaded = false;
+	 	$http.get(server+'/json/recording/list?linked-waveplots='+val+'&page='+$scope.page).success(function (data) {
     		$scope.listelements = data;
+        $scope.loaded = true;
       });
       $scope.page = 1;
  	},true);
@@ -177,7 +194,7 @@ function RegisterCtrl($scope,$http){
       } else {
          $scope.input_error = false;
          $scope.submitted = true;
-         $http.post('http://localhost:19048/json/editor',"username="+$scope.username+"&email="+$scope.email).success(function(data) {
+         $http.post(server+'/json/editor',"username="+$scope.username+"&email="+$scope.email).success(function(data) {
             if(data.result == 'success'){
                $scope.result = {"class":"alert-success","text":"Successfully registered! Please await your activation email!"};
             } else {

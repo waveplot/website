@@ -3,6 +3,8 @@
 <h3>A List of WavePlots</h3>
 <p>A list of WavePlots on the server:</p>
 
+<div  data-ng-hide="loaded" class="text-center"><img src="/img/ajax-loader.gif" alt=""></img></br></br></div>
+
 <table>
    <tr ng-repeat="element in listelements | filter:{'valid':true}" height="30">
       <td width="60"><canvas width="50" height="21" draw></canvas></td>
