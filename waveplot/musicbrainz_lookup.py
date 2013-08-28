@@ -65,8 +65,8 @@ class LookupThread(threading.Thread):
 
         results = cur.fetchall()
 
-        try:
-            for result in results:
+        for result in results:
+            try:
                 r = requests.get("http://musicbrainz.org/ws/2/release/{}?inc=recordings&fmt=json".format(result[0]))
 
                 release_data = r.json()
@@ -110,11 +110,9 @@ class LookupThread(threading.Thread):
                 self.db_con.commit()
 
                 time.sleep(1)
-        except requests.ConnectionError:
-            self.db_con.rollback()
 
-        cur.execute("SELECT mbid FROM releases WHERE cached_artist_credit IS NULL LIMIT 1000")
-        results = cur.fetchall()
+            except requests.ConnectionError:
+                self.db_con.rollback()
 
     def _cache_recordings_(self):
         cur = waveplot.utils.get_cursor(self.db_con)
@@ -123,8 +121,9 @@ class LookupThread(threading.Thread):
 
         results = cur.fetchall()
 
-        try:
-            for result in results:
+
+        for result in results:
+            try:
                 r = requests.get("http://musicbrainz.org/ws/2/recording/{}?fmt=json".format(result[0]))
 
                 recording_data = r.json()
@@ -146,9 +145,8 @@ class LookupThread(threading.Thread):
 
                 self.db_con.commit()
                 time.sleep(1)
-        except requests.ConnectionError:
-            pass
-
+            except requests.ConnectionError:
+                pass
 
     def run(self):
         while not self._stop.is_set():
