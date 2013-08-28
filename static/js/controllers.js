@@ -1,6 +1,6 @@
 'use strict';
 
-var server = 'http://localhost:19048';
+var server = 'http://pi.ockmore.net:19048';
 
 function HomeCtrl($scope) {
 }
@@ -55,32 +55,32 @@ function WavePlotListCtrl($scope, $routeParams, $location, $http){
    delete $http.defaults.headers.common['X-Requested-With'];
 
   $scope.loaded = false;
-	$scope.page = 1;
+    $scope.page = 1;
 
-	$scope.displayWavePlot = function (uuid) {
-   		$location.path("/waveplot/"+uuid);
-	};
+    $scope.displayWavePlot = function (uuid) {
+        $location.path("/waveplot/"+uuid);
+    };
 
-	$scope.$watch('page', function(val) {
-		if(val > 0) {
+    $scope.$watch('page', function(val) {
+        if(val > 0) {
       $scope.loaded = false;
       $scope.listelements = undefined;
-      
-		 	$http.get(server+'/json/waveplot/list?page='+val).success(function (data) {
-       		$scope.listelements = data;
-       		$scope.valid_results = $scope.listelements.length;
 
-       		for(var i = 0; i != $scope.listelements.length; i++){
-       		   if($scope.listelements[i].title == null) {
-       		      $scope.listelements[i].title = "<"+$scope.listelements[i].uuid+">";
-       		      $scope.listelements[i].style = { 'font-family': '"Courier New", Courier, monospace' }
-       		   }
-       	      if($scope.listelements[i].artist == null) {
-       		      $scope.listelements[i].artist = "<uncached>";
-       		   }
+            $http.get(server+'/json/waveplot/list?page='+val).success(function (data) {
+            $scope.listelements = data;
+            $scope.valid_results = $scope.listelements.length;
 
-       	      $scope.listelements[i].valid = true;
-       		}
+            for(var i = 0; i != $scope.listelements.length; i++){
+               if($scope.listelements[i].title == null) {
+                  $scope.listelements[i].title = "<"+$scope.listelements[i].uuid+">";
+                  $scope.listelements[i].style = { 'font-family': '"Courier New", Courier, monospace' }
+               }
+              if($scope.listelements[i].artist == null) {
+                  $scope.listelements[i].artist = "<uncached>";
+               }
+
+              $scope.listelements[i].valid = true;
+            }
 
 
             while($scope.listelements.length < 20){
@@ -90,14 +90,14 @@ function WavePlotListCtrl($scope, $routeParams, $location, $http){
                   "artist":"",
                   "data":"",
                   "valid":false });
-        	   }
-             
+               }
+
              $scope.loaded = true;
          });
-	 	} else {
-	 		$scope.page = 1;
-	 	}
- 	},true);
+        } else {
+            $scope.page = 1;
+        }
+    },true);
 }
 
 function RecordingMBIDCtrl($scope,$routeParams,$location,$http){
@@ -105,29 +105,29 @@ function RecordingMBIDCtrl($scope,$routeParams,$location,$http){
 
    $scope.mbid = $routeParams.mbid;
 
-	$scope.page = 1;
+    $scope.page = 1;
 
-	$scope.displayWavePlot = function (uuid) {
-   		$location.path("/waveplot/"+uuid);
-	};
+    $scope.displayWavePlot = function (uuid) {
+        $location.path("/waveplot/"+uuid);
+    };
 
    $scope.$watch('page', function(val) {
-		if(val > 0) {
-		 	$http.get(server+'/json/waveplot/list?page='+val+'&recording='+$scope.mbid).success(function (data) {
-       		$scope.listelements = data;
-       		$scope.valid_results = $scope.listelements.length;
+        if(val > 0) {
+            $http.get(server+'/json/waveplot/list?page='+val+'&recording='+$scope.mbid).success(function (data) {
+            $scope.listelements = data;
+            $scope.valid_results = $scope.listelements.length;
 
-       		for(var i = 0; i != $scope.listelements.length; i++){
-       		   if($scope.listelements[i].title == null) {
-       		      $scope.listelements[i].title = "<"+$scope.listelements[i].uuid+">";
-       		      $scope.listelements[i].style = { 'font-family': '"Courier New", Courier, monospace' }
-       		   }
-       	      if($scope.listelements[i].artist == null) {
-       		      $scope.listelements[i].artist = "<uncached>";
-       		   }
+            for(var i = 0; i != $scope.listelements.length; i++){
+               if($scope.listelements[i].title == null) {
+                  $scope.listelements[i].title = "<"+$scope.listelements[i].uuid+">";
+                  $scope.listelements[i].style = { 'font-family': '"Courier New", Courier, monospace' }
+               }
+              if($scope.listelements[i].artist == null) {
+                  $scope.listelements[i].artist = "<uncached>";
+               }
 
-       	      $scope.listelements[i].valid = true;
-       		}
+              $scope.listelements[i].valid = true;
+            }
 
 
             while($scope.listelements.length < 20){
@@ -137,12 +137,12 @@ function RecordingMBIDCtrl($scope,$routeParams,$location,$http){
                   "artist":"",
                   "data":"",
                   "valid":false });
-        	   }
+               }
          });
-	 	} else {
-	 		$scope.page = 1;
-	 	}
- 	},true);
+        } else {
+            $scope.page = 1;
+        }
+    },true);
 }
 
 function RecordingListCtrl($scope,$location,$http){
@@ -153,31 +153,31 @@ function RecordingListCtrl($scope,$location,$http){
    $scope.loaded = false;
 
    $scope.displayRecording = function (mbid) {
-   		$location.path("/recording/"+mbid);
-	};
+        $location.path("/recording/"+mbid);
+    };
 
    $scope.$watch('page', function(val) {
-		if(val > 0) {
+        if(val > 0) {
       $scope.listelements = undefined;
       $scope.loaded = false;
-		 	$http.get(server+'/json/recording/list?linked-waveplots='+$scope.num_links+'&page='+val).success(function (data) {
-       		$scope.listelements = data;
+            $http.get(server+'/json/recording/list?linked-waveplots='+$scope.num_links+'&page='+val).success(function (data) {
+            $scope.listelements = data;
           $scope.loaded = true;
          });
-	 	} else {
-	 		$scope.page = 1;
-	 	}
- 	},true);
+        } else {
+            $scope.page = 1;
+        }
+    },true);
 
- 	$scope.$watch('num_links', function(val) {
+    $scope.$watch('num_links', function(val) {
     $scope.listelements = undefined;
     $scope.loaded = false;
-	 	$http.get(server+'/json/recording/list?linked-waveplots='+val+'&page='+$scope.page).success(function (data) {
-    		$scope.listelements = data;
+        $http.get(server+'/json/recording/list?linked-waveplots='+val+'&page='+$scope.page).success(function (data) {
+            $scope.listelements = data;
         $scope.loaded = true;
       });
       $scope.page = 1;
- 	},true);
+    },true);
 }
 
 function RegisterCtrl($scope,$http){
