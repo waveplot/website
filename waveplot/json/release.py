@@ -15,6 +15,7 @@ import waveplot.utils
 db_con = db.connect(host = "localhost", user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
 
 @app.route('/json/extreme-dr', methods = ['GET'])
+@waveplot.utils.crossdomain(origin = '*')
 def extreme_dr():
     cur = waveplot.utils.get_cursor(db_con)
 
@@ -44,6 +45,5 @@ def extreme_dr():
         result[b'dr_level'] = result[b'dr_level'] / 10
 
     response = make_response(json.dumps({u'highest':highest, u'lowest':lowest}))
-    waveplot.utils.check_cross_domain(response)
 
     return response

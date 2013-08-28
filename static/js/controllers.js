@@ -1,6 +1,6 @@
 'use strict';
 
-var server = 'http://pi.ockmore.net:19048';
+var server = 'http://localhost:19048';
 
 function HomeCtrl($scope) {
 }
