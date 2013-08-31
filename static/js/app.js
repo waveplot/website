@@ -2,16 +2,17 @@ angular.module('waveplot', ['ui.bootstrap']).
     config(['$routeProvider','$locationProvider', function($routeProvider,$locationProvider) {
             $routeProvider.
                 when('/waveplot/:uuid', {templateUrl: 'partials/waveplot_uuid.html', controller: WavePlotUUIDCtrl}).
-            when('/recording/:mbid', {templateUrl: 'partials/recording_mbid.html', controller: RecordingMBIDCtrl});
+                when('/recording/:mbid', {templateUrl: 'partials/recording_mbid.html', controller: RecordingMBIDCtrl});
 
             $routeProvider.
                 when('/list/waveplot', {templateUrl: 'partials/waveplot_list.html', controller: WavePlotListCtrl}).
                 when('/list/recording', {templateUrl: 'partials/recording_list.html', controller: RecordingListCtrl});
 
             $routeProvider.
-               when('/get-started', {templateUrl: 'partials/get_started.html'}).
-               when('/extreme-dr', {templateUrl: 'partials/extreme_dr.html', controller: ExtremeDRCtrl}).
-            when('/register', {templateUrl: 'partials/register.html', controller: RegisterCtrl}).
+                when('/get-started', {templateUrl: 'partials/get_started.html'}).
+                when('/extreme-dr', {templateUrl: 'partials/extreme_dr.html', controller: ExtremeDRCtrl}).
+                when('/register', {templateUrl: 'partials/register.html', controller: RegisterCtrl}).
+                when('/activate/:key', {templateUrl: 'partials/activate.html', controller: ActivateCtrl}).
                 otherwise({redirectTo: '', templateUrl: 'partials/home.html'});
 
             //$locationProvider.html5Mode(true).hashPrefix('!');

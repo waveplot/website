@@ -1,6 +1,6 @@
 'use strict';
 
-var server = 'http://pi.ockmore.net:19048';
+var server = 'http://localhost:19048';
 
 function HomeCtrl($scope) {
 }
@@ -193,16 +193,29 @@ function RegisterCtrl($scope,$http){
          $scope.input_error = true;
       } else {
          $scope.input_error = false;
-         $scope.submitted = true;
          $http.post(server+'/json/editor',"username="+$scope.username+"&email="+$scope.email).success(function(data) {
+            $scope.submitted = true;
             if(data.result == 'success'){
                $scope.result = {"class":"alert-success","text":"Successfully registered! Please await your activation email!"};
-            } else {
+            } else if(data.error != undefined) {
                $scope.result = {"class":"alert-error","text":data.error};
             }
 
          });
       }
    };
+}
 
+function ActivateCtrl($scope,$routeParams,$http){
+    delete $http.defaults.headers.common['X-Requested-With'];
+    $http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
+
+    $http.post(server+'/json/activate',"key="+$routeParams.key).success(function(data) {
+        $scope.returned = true;
+        if(data.result == 'success'){
+            $scope.result = {"class":"alert-success","text":"Account activated!"};
+        } else {
+            $scope.result = {"class":"alert-error","text":data.error};
+        }
+    });
 }

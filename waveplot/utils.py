@@ -9,6 +9,8 @@ from datetime import timedelta
 from flask import make_response, request, current_app
 from functools import update_wrapper
 
+import smtplib
+
 def secsToHMS(secs):
     mins = secs // 60
     secs -= 60 * mins
@@ -81,3 +83,21 @@ def crossdomain(origin = None, methods = None, headers = None,
         f.provide_automatic_options = False
         return update_wrapper(wrapped_function, f)
     return decorator
+
+def SendEmail(recipient, subject, message):
+    session = smtplib.SMTP('smtp.gmail.com', 587)
+    session.ehlo()
+    session.starttls()
+    session.ehlo()
+    session.login(passwords['email']['username'], passwords['email']['password'])
+
+    headers = ["from: " + passwords['email']['username'],
+               "subject: " + subject,
+               "to: " + recipient,
+               "mime-version: 1.0",
+               "content-type: text/html"]
+
+    headers = "\r\n".join(headers)
+
+    session.sendmail(passwords['email']['username'], recipient, headers + "\r\n\r\n" + message)
+    session.quit()
