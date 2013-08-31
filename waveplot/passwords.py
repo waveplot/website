@@ -7,6 +7,7 @@ passwords = {
     "mysql":
         {
             "username":"",
-            "password":""
+            "password":"",
+            "host":""
         }
 }
