@@ -31,7 +31,7 @@ def get_cursor(db_con, use_dict = False):
 
         return result
     except db.OperationalError:
-        db_con = db.connect(host = "localhost", user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
+        db_con = db.connect(host = passwords['mysql']['host'], user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
 
         if use_dict:
             result = db_con.cursor(db.cursors.DictCursor)

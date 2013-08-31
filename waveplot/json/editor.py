@@ -13,7 +13,7 @@ from waveplot.passwords import passwords
 
 import waveplot.utils
 
-db_con = db.connect(host = "localhost", user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
+db_con = db.connect(host = passwords['mysql']['host'], user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
 
 activation_string = """
 <p>Hi {}!</p>

@@ -18,7 +18,7 @@ class LookupThread(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
-        self.db_con = db.connect(host = "localhost", user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
+        self.db_con = db.connect(host = passwords['mysql']['host'], user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
         self.recent_release_lookups = OrderedDict()
         self.recent_recording_lookups = deque()
         self._stop = threading.Event()
