@@ -1,21 +1,43 @@
-#!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-from __future__ import division, absolute_import
-import MySQLdb as db
+# Copyright 2013 Ben Ockmore
+
+# This file is part of WavePlot Server.
+
+# WavePlot Server is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# WavePlot Server is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with WavePlot Server. If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import print_function, absolute_import, division
+
 import json
 import random
 
 from flask import request, make_response
 
-from waveplot import app
-from waveplot.passwords import passwords
-
+import waveplot.schema
 import waveplot.utils
 
-db_con = db.connect(host = passwords['mysql']['host'], user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
+from waveplot import app
+from waveplot.schema import Session, Editor
 
-activation_string = """
+@app.route('/json/editor', methods = ['POST', 'OPTIONS'])
+@waveplot.utils.crossdomain(origin = '*')
+def editor_all():
+    if request.method == b'POST':
+        return editor_create()
+
+def editor_create():
+    activation_string = """
 <p>Hi {}!</p>
 
 <p>Please activate your WavePlot account using the activation link below:</p>
@@ -24,68 +46,37 @@ activation_string = """
 
 <p>Many thanks for your help in building the WavePlot database!</p>"""
 
-def editor_create():
+
     username = request.form.get('username', '')
     email = request.form.get('email', '')
 
-    if username and email:
-        atpos = email.rfind('@')
-        dotpos = email.rfind('.')
+    if not (username and email):
+        return make_response(json.dumps({u'result':u'failure', u'error':u"Missing data. Username and email required."}))
 
-        if (atpos < 1) or (dotpos < (atpos + 2)) or ((dotpos + 2) >= len(email)):
-            response = make_response(json.dumps({u'result':u'failure', u'error':u"Email address invalid."}))
-            return response
+    atpos = email.rfind('@')
+    dotpos = email.rfind('.')
 
-        cur = waveplot.utils.get_cursor(db_con)
-        cur.execute("SELECT * FROM editors WHERE email=%s", (email,))
-        rows = cur.fetchall()
+    if (atpos < 1) or (dotpos < (atpos + 2)) or ((dotpos + 2) >= len(email)):
+        return make_response(json.dumps({u'result':u'failure', u'error':u"Email address invalid."}))
 
-        if not rows:
-            generated_key = random.randint(0, 999999999)
-            cur.execute("SELECT activation_key FROM editors WHERE activation_key=%s", (generated_key,))
-            while cur.fetchall():
-                generated_key = random.randint(0, 999999999)
-                cur.execute("SELECT activation_key FROM editors WHERE activation_key=%s", (generated_key,))
+    session = Session()
 
-            cur.execute("INSERT INTO editors (name,email,activation_key) VALUES (%s,%s,%s)", (username, email, generated_key))
-            db_con.commit()
+    if session.query(Editor).filter_by(email=email).count():
+        return make_response(json.dumps({u'result':u'failure', u'error':u"Email address already registered. Please await your activation email."}))
 
-            # Send an activation email
-            activation_url = "http://waveplot.ockmore.net/#/activate/"+str(generated_key)
-            waveplot.utils.SendEmail(email,"WavePlot Activation Required!", activation_string.format(username,activation_url,activation_url))
+    generated_key = random.randint(0, 999999999)
+    while session.query(Editor).filter_by(key=generated_key).count():
+        generated_key = random.randint(0, 999999999)
 
-            response = make_response(json.dumps({u'result':u'success'}))
-        else:
-            response = make_response(json.dumps({u'result':u'failure', u'error':u"Email address already registered. Please await your activation email."}))
-    else:
-        response = make_response(json.dumps({u'result':u'failure', u'error':u"Missing data. Username and email required."}))
+    new_editor = Editor(username, email, generated_key)
+    session.add(new_editor)
 
-    return response
+    # Send an activation email
+    activation_url = "http://waveplot.ockmore.net/#/activate/"+str(generated_key)
+    waveplot.utils.SendEmail(email,"WavePlot Activation Required!", activation_string.format(username,activation_url,activation_url))
 
-@app.route('/json/editor', methods = ['POST', 'OPTIONS'])
-@waveplot.utils.crossdomain(origin = '*')
-def editor_all():
-    if request.method == b'POST':
-        return editor_create()
+    response = make_response(json.dumps({u'result':u'success'}))
 
-@app.route("/json/activate", methods = ['POST'])
-@waveplot.utils.crossdomain(origin = '*')
-def activate():
-    key = request.form.get('key', None)
-    if key is None:
-        response = make_response(json.dumps({u'result':u'failure', u'error':u"Missing data. Activation key required."}))
+    session.commit()
 
-    cur = waveplot.utils.get_cursor(db_con)
-    cur.execute("SELECT activation_key, activated FROM editors WHERE activation_key=%s", (key,))
-    rows = cur.fetchall()
-    if rows:
-        if not rows[0][1]:
-            cur.execute("UPDATE editors SET activated = 1 WHERE activation_key = %s", (key,))
-            response = make_response(json.dumps({u'result':u'success'}))
-        else:
-            response = make_response(json.dumps({u'result':u'failure', u'error':u"You've already activated! Time to use the site!"}))
-    else:
-        response = make_response(json.dumps({u'result':u'failure', u'error':u"No such key! Please register!"}))
-
-    return response
-
+    return make_response(json.dumps({u'result':u'success'}))
