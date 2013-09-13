@@ -36,6 +36,29 @@ def editor_all():
     if request.method == b'POST':
         return editor_create()
 
+@app.route("/json/activate", methods = ['POST'])
+@waveplot.utils.crossdomain(origin = '*')
+def activate():
+    if 'key' not in request.form:
+        return make_response(json.dumps({u'result':u'failure', u'error':u"Missing data. Activation key required."}))
+
+    session = Session()
+
+    editor = session.query(Editor).filter_by(key=request.form['key']).first()
+
+    if editor is None:
+        return make_response(json.dumps({u'result':u'failure', u'error':u"No such key! Please register!"}))
+
+    if editor.activated:
+        return make_response(json.dumps({u'result':u'failure', u'error':u"You've already activated! Time to use the site!"}))
+
+    editor.activated = True
+
+    session.commit()
+
+    return make_response(json.dumps({u'result':u'success'}))
+
+
 def editor_create():
     activation_string = """
 <p>Hi {}!</p>
