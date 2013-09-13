@@ -1,49 +1,46 @@
-#!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-from __future__ import division, absolute_import
-import MySQLdb as db
+# Copyright 2013 Ben Ockmore
+
+# This file is part of WavePlot Server.
+
+# WavePlot Server is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# WavePlot Server is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with WavePlot Server. If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import print_function, absolute_import, division
+
 import json
 
-from flask import request, Response, make_response
+from flask import request, make_response
 
-from waveplot import app
-from waveplot.passwords import passwords
-
+import waveplot.schema
 import waveplot.utils
 
-db_con = db.connect(host = passwords['mysql']['host'], user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
+from waveplot import app
+from waveplot.schema import Session, Release
 
 @app.route('/json/extreme-dr', methods = ['GET'])
 @waveplot.utils.crossdomain(origin = '*')
 def extreme_dr():
-    cur = waveplot.utils.get_cursor(db_con)
 
-    cur.execute("SELECT releases.cached_title, artist_credits.name, releases.mbid, releases.dr_level FROM releases JOIN artist_credits ON releases.cached_artist_credit=artist_credits.id ORDER BY dr_level DESC LIMIT 10")
-    rows = cur.fetchall()
+    session = Session()
 
-    info = [u'title', u'artist', u'mbid', u'dr_level']
+    releases = session.query(Release).order_by(Release.dr_level.desc()).limit(10)
 
-    highest = [dict(zip(info, row)) for row in rows]
+    highest = [{u'title':r.title, u'artist':r.artist_credit.name, u'mbid':r.mbid, u'dr_level':r.dr_level / 10} for r in releases]
 
-    for result in highest:
-        result[b'dr_level'] = result[b'dr_level'] / 10
+    releases = session.query(Release).order_by(Release.dr_level.asc()).limit(10)
 
-        # release[b"short_cached_artist"] = release["cached_artist"]
+    lowest = [{u'title':r.title, u'artist':r.artist_credit.name, u'mbid':r.mbid, u'dr_level':r.dr_level / 10} for r in releases]
 
-        # if len(release["cached_name"]) > 30:
-            # release["cached_name"] = release["cached_name"][0:30] + u"..."
-        # if len(release["cached_artist"]) > 30:
-         #   release["short_cached_artist"] = release["cached_artist"][0:30] + u"..."
-
-    cur.execute("SELECT releases.cached_title, artist_credits.name, releases.mbid, releases.dr_level FROM releases JOIN artist_credits ON releases.cached_artist_credit=artist_credits.id ORDER BY dr_level ASC LIMIT 10")
-    rows = cur.fetchall()
-
-    lowest = [dict(zip(info, row)) for row in reversed(rows)]
-
-    for result in lowest:
-        result[b'dr_level'] = result[b'dr_level'] / 10
-
-    response = make_response(json.dumps({u'highest':highest, u'lowest':lowest}))
-
-    return response
+    return make_response(json.dumps({u'highest':highest, u'lowest':lowest}))

@@ -94,6 +94,8 @@ class Release(Base):
 
     title = Column(UnicodeText(collation='utf8_bin'))
 
+    dr_level = Column(SmallInteger)
+
     artist_credit_id = Column(Integer, ForeignKey('artist_credits.id'))
 
     tracks = relationship("Track", backref="release")
@@ -114,6 +116,8 @@ class Track(Base):
     title = Column(UnicodeText(collation='utf8_bin'))
     track_number = Column(SmallInteger())
     disc_number = Column(SmallInteger())
+
+    dr_level = Column(SmallInteger)
 
     release_mbid_bin = Column(BINARY(length=16), ForeignKey('releases.mbid_bin'))
     recording_mbid_bin = Column(BINARY(length=16), ForeignKey('recordings.mbid_bin'))
