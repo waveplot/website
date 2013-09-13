@@ -78,6 +78,8 @@ class Recording(Base):
     title = Column(UnicodeText(collation='utf8_bin'))
     waveplot_count = Column(Integer)
 
+    tracks = relationship("Track", backref="recording")
+
     def __init__(self, mbid, title):
         self.mbid = mbid
         self.title = title
