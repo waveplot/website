@@ -23,14 +23,24 @@ def waveplot_list():
     limit = int(request.args.get('limit', "20"))
     recording = request.args.get('recording', "")
 
+    barcode = int(request.args['barcode']) if 'barcode' in request.args else None
+    print(barcode)
+
     offset = (page - 1) * limit
 
     if not recording:
-        query = "SELECT waveplots.uuid, recordings.cached_title, artist_credits.name, waveplots.thumbnail_data FROM waveplots JOIN (recordings,releases,artist_credits) ON (waveplots.recording_mbid=recordings.mbid AND waveplots.release_mbid=releases.mbid AND releases.cached_artist_credit=artist_credits.id) ORDER BY waveplots.submit_date DESC LIMIT %s OFFSET %s"
-        data = (limit, offset)
+        query = "SELECT waveplots.uuid, recordings.cached_title, artist_credits.name, waveplots.thumbnail_data FROM waveplots JOIN (recordings,releases,artist_credits) ON (waveplots.recording_mbid=recordings.mbid AND waveplots.release_mbid=releases.mbid AND releases.cached_artist_credit=artist_credits.id) " + ("" if barcode is None else "WHERE waveplots.audio_barcode=%s ") + "ORDER BY waveplots.submit_date DESC LIMIT %s OFFSET %s"
+        if barcode is None:
+            data = (limit, offset)
+        else:
+            data = (barcode, limit, offset)
+
     else:
         query = "SELECT waveplots.uuid, recordings.cached_title, artist_credits.name, waveplots.thumbnail_data FROM waveplots JOIN (recordings,releases,artist_credits) ON (waveplots.recording_mbid=recordings.mbid AND waveplots.release_mbid=releases.mbid AND releases.cached_artist_credit=artist_credits.id) WHERE waveplots.recording_mbid=%s ORDER BY waveplots.submit_date DESC LIMIT %s OFFSET %s"
+
         data = (recording, limit, offset)
+
+
 
     cur.execute(query, data)
 
