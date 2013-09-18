@@ -39,3 +39,4 @@ if os.getenv('WAVEPLOT_SETTINGS') is not None:
 import waveplot.json.editor
 import waveplot.json.recording
 import waveplot.json.release
+import waveplot.json.waveplot

@@ -25,7 +25,7 @@ import base64
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref, sessionmaker
-from sqlalchemy import Column, Integer, BigInteger, UnicodeText, Boolean, SmallInteger, BINARY, ForeignKey, Interval, String
+from sqlalchemy import Column, Integer, BigInteger, UnicodeText, Boolean, SmallInteger, BINARY, ForeignKey, Interval, String, DateTime
 
 from waveplot.passwords import passwords
 
@@ -90,6 +90,7 @@ class ArtistCredit(Base):
     user_set_picture = Column(Boolean)
 
     releases = relationship("Release", backref="artist_credit")
+    recordings = relationship("Recording", backref="artist_credit")
 
 class Recording(Base):
     __tablename__ = 'recordings'
@@ -99,11 +100,13 @@ class Recording(Base):
     title = Column(UnicodeText(collation='utf8_bin'))
     waveplot_count = Column(Integer)
 
-    tracks = relationship("Track", backref="recording")
+    artist_credit_id = Column(Integer, ForeignKey('artist_credits.id'))
 
-    def __init__(self, mbid, title):
+    tracks = relationship("Track", backref="recording")
+    waveplots = relationship('WavePlot', backref='recording')
+
+    def __init__(self, mbid):
         self.mbid = mbid
-        self.title = title
         self.waveplot_count = 0
 
     mbid = property(fget=mbid_get, fset=mbid_set)
@@ -135,8 +138,8 @@ class Track(Base):
     mbid_bin = Column(BINARY(length=16), primary_key=True)
 
     title = Column(UnicodeText(collation='utf8_bin'))
-    track_number = Column(SmallInteger())
-    disc_number = Column(SmallInteger())
+    track_number = Column(SmallInteger)
+    disc_number = Column(SmallInteger)
 
     dr_level = Column(SmallInteger)
 
@@ -145,7 +148,7 @@ class Track(Base):
 
     waveplots = relationship('WavePlot', backref='track')
 
-    def __init__(self, mbid, title, track_number, disc_number, num_channels, release, recording):
+    def __init__(self, mbid, track_number, disc_number, release, recording):
         self.mbid_bin = mbid
         self.title = title
         self.track_number = track_number
@@ -175,8 +178,12 @@ class WavePlot(Base):
     thumbnail_bin = Column(BINARY(length=50))
     audio_barcode = Column(SmallInteger)
 
+    version = Column(String(20, collation='ascii_bin'))
+    submit_date = Column(DateTime)
+
     editor_id = Column(Integer, ForeignKey('editors.id'))
     track_mbid_bin = Column(BINARY(length=16), ForeignKey('tracks.mbid_bin'))
+    recording_mbid_bin = Column(BINARY(length=16), ForeignKey('recordings.mbid_bin'))
 
     @property
     def uuid(self):
