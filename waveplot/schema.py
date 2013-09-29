@@ -88,6 +88,9 @@ class Artist(Base):
 
     mbid = property(fget=mbid_get, fset=mbid_set)
 
+    def __init__(self, mbid):
+        self.mbid = mbid
+
 
 class ArtistCredit(Base):
     __tablename__ = 'artist_credits'
@@ -101,6 +104,11 @@ class ArtistCredit(Base):
     releases = relationship("Release", backref="artist_credit")
     recordings = relationship("Recording", backref="artist_credit")
     tracks = relationship("Track", backref="artist_credit")
+
+    def __init__(self, name):
+        self.name = name
+        self.picture_url = u""
+        self.user_set_picture = False
 
 class Recording(Base):
     __tablename__ = 'recordings'
