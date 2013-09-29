@@ -55,6 +55,7 @@ def activate():
     editor.activated = True
 
     session.commit()
+    session.close()
 
     return make_response(json.dumps({u'result':u'success'}))
 
@@ -101,5 +102,6 @@ def editor_create():
     response = make_response(json.dumps({u'result':u'success'}))
 
     session.commit()
+    session.close()
 
     return make_response(json.dumps({u'result':u'success'}))

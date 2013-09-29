@@ -34,10 +34,10 @@ function WavePlotUUIDCtrl($scope, $routeParams, $http){
       if(data.result == "success"){
          $scope.data = data.waveplot;
 
-         $scope.data.source = $scope.data.source.toUpperCase();
-         if($scope.data.source.indexOf("FLAC") != -1)
-         {
-            $scope.data.source = $scope.data.source.substr(0,4);
+         $scope.data.source_type = $scope.data.source_type.toUpperCase();
+
+         if($scope.data.source_type == "FLAC" && $scope.data.bit_rate == 0){
+             $scope.data.bit_rate = "N/A";
          }
 
          $scope.element = {

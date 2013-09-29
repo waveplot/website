@@ -21,6 +21,8 @@ from __future__ import print_function, absolute_import, division
 
 import os
 import hashlib
+import zlib
+import base64
 
 THUMB_IMAGE_WIDTH = 50
 THUMB_IMAGE_HEIGHT = 21
@@ -62,12 +64,34 @@ def resample_data(data, target_length, source_amplitude, target_amplitude):
 class WavePlotImage():
     def __init__(self, encoded_data):
 
-        self.raw_data = encoded_data.decode('base64').decode('zlib')
+        self.raw_data = zlib.decompress(base64.b64decode(encoded_data))
 
         self.sha1 = hashlib.sha1(self.raw_data)
 
         self.thumb_data = None
         self.preview_data = None
+        self.sonic_hash = None
+
+    def make_hash(self):
+        # Restrict data to 5% points (trimmed length)
+        start_index = end_index = 0
+        for i in range(0,len(self.raw_data)):
+            if ord(self.raw_data[i]) > 10:
+                start_index = i
+                break
+
+        for i in range(len(self.raw_data) - 1,-1,-1):
+            if ord(self.raw_data[i]) > 10:
+                end_index = i
+                break
+
+        image_data = self.raw_data[start_index:end_index+1]
+
+        # Compute value, converting to ASCII '0' and '1' for int conversion.
+        barcode_str = "".join(chr(ord(x) + 0x30) for x in
+                              resample_data(image_data, 16, 200, 1))
+
+        return int(barcode_str,2)
 
     def generate_image_data(self):
         self.thumb_data = resample_data(self.raw_data, THUMB_IMAGE_WIDTH, 200,
@@ -75,6 +99,8 @@ class WavePlotImage():
 
         self.preview_data = resample_data(self.raw_data, PREVIEW_IMAGE_WIDTH,
                                           200, int(PREVIEW_IMAGE_HEIGHT / 2))
+
+        self.sonic_hash = self.make_hash()
 
     def save(self, uuid):
         self.filename_prefix = waveplot_uuid_to_filename(uuid)
