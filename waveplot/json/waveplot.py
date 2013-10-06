@@ -31,8 +31,10 @@ import waveplot.schema
 import waveplot.utils
 import waveplot.image
 
+import redis
+
 from waveplot import app, VERSION
-from waveplot.schema import Session, WavePlot, Track, Recording, Editor, Release, uuid_h2b, uuid_b2h
+from waveplot.schema import Session, WavePlot, Track, Recording, Editor, WavePlotContext, Release, uuid_h2b, uuid_b2h
 
 @app.route('/json/waveplot/<value>', methods = ['GET', 'PUT', 'DELETE'])
 @waveplot.utils.crossdomain(origin = '*')
@@ -62,8 +64,8 @@ def waveplot_list():
 
     results = [{
                 u"uuid":w.uuid,
-                u'title':w.track.title,
-                u'artist':w.recording.artist_credit.name if w.recording.artist_credit is not None else None,
+                u'title':w.track.title if w.track is not None else None,
+                u'artist':w.track.recording.artist_credit.name if w.track is not None else None,
                 b"data":base64.b64encode(w.thumbnail_bin)
                } for w in waveplots]
 
@@ -81,7 +83,7 @@ def waveplot_uuid(value):
         response = make_response(json.dumps({u'result':u'failure', u'error':u"No such WavePlot."}))
 
     track = wp.track
-    release = track.release
+    release = (track.release if track is not None else None)
 
     path = waveplot.image.waveplot_uuid_to_filename(value.replace('-', '')) + "_preview"
     if not os.path.exists(path):
@@ -96,13 +98,13 @@ def waveplot_uuid(value):
             u'uuid':wp.uuid,
             u'length':str(wp.length),
             u'trimmed_length':str(wp.trimmed_length),
-            u'recording':{
+            u'recording':({
                 u'mbid':uuid_b2h(track.recording_mbid_bin)
-            },
-            u'release':{
+            } if track is not None else None),
+            u'release':({
                 u'mbid':release.mbid,
                 u'title':release.title
-            },
+            } if release is not None else None),
             u'source_type':wp.source_type,
             u'bit_rate':wp.bit_rate,
             u'bit_depth':wp.bit_depth,
@@ -110,11 +112,14 @@ def waveplot_uuid(value):
             u'num_channels':wp.num_channels,
             u'dr_level':wp.dr_level / 10,
             u'sonic_hash':wp.sonic_hash,
-            u'track_num':track.track_number,
-            u'disc_num':track.disc_number,
-            u'title':track.title,
-            u'artist':track.artist_credit,
-            u'preview':preview
+            u'track':({
+                u'title':track.title,
+                u'position':track.track_number,
+                u'disc':track.disc_number,
+                u'artist':track.artist_credit.name
+            } if track is not None else None),
+            u'preview':preview,
+            u'sonic_hash':wp.sonic_hash
         }
     }
 
@@ -172,6 +177,7 @@ def waveplot_post():
     # Image Data in DB
     wp.thumbnail_bin = image.thumb_data
     wp.sonic_hash = image.sonic_hash
+    print(wp.sonic_hash)
 
     # Sonic properties
     wp.num_channels = int(f['num_channels'])
@@ -182,33 +188,18 @@ def waveplot_post():
     wp.bit_depth = f['bit_depth']
     wp.bit_rate = f['bit_rate']
 
-    # Related entities
-    recording = session.query(Recording).filter_by(mbid_bin=uuid.UUID(hex=f['recording']).bytes).first()
-    if recording is None:
-        recording = Recording(f['recording'])
-        session.add(recording)
+    wpc = WavePlotContext(wp.uuid)
 
-    recording.waveplot_count += 1
-    wp.recording = recording
-
-    release = session.query(Release).filter_by(mbid_bin=uuid.UUID(hex=f['release']).bytes).first()
-    if release is None:
-        release = Release(f['release'])
-        session.add(release)
-
-    # Put track in here with false mbid, until it gets looked up later
-    # This is necessary because (afaik) there's no track mbid support in Picard
-    generated_mbid = uuid.uuid4()
-    while session.query(Track).filter_by(mbid_bin=generated_mbid.bytes).count():
-        generated_mbid = uuid.uuid4()
-
-    track = Track(generated_mbid.hex, int(f['track']), int(f['disc']), release, recording)
-    wp.track = track
+    wpc.release_mbid_bin = uuid_h2b(f['release'])
+    wpc.recording_mbid_bin = uuid_h2b(f['recording'])
+    wpc.track_number = f['track']
+    wpc.disc_number = f['disc']
 
     image.save(generated_uuid.hex)
 
     session.add(wp)
-    session.add(track)
+    session.commit()
+    session.add(wpc)
 
     result_uuid = wp.uuid
 

@@ -40,6 +40,19 @@ function WavePlotUUIDCtrl($scope, $routeParams, $http){
              $scope.data.bit_rate = "N/A";
          }
 
+         var temp = $scope.data.sonic_hash;
+         var recvd = temp;
+         $scope.data.sonic_hash = "[";
+         for(var i = 0; i != 16; i++){
+            if(temp & 0x8000) {
+                $scope.data.sonic_hash += "#";
+            } else {
+                $scope.data.sonic_hash += "_";
+            }
+            temp = (temp << 1) & 0xFFFE;
+         }
+         $scope.data.sonic_hash += "] (" + recvd + ")";
+
          $scope.element = {
             "uuid":$scope.uuid,
             "data":$scope.data.preview

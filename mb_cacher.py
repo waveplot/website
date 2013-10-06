@@ -21,17 +21,17 @@
 import datetime
 import requests
 import time
-
+from collections import Counter
 
 import waveplot.schema
-from waveplot.schema import uuid_h2b, uuid_b2h, Artist, ArtistCredit, Artist_ArtistCredit, Release, Session, Track
+from waveplot.schema import uuid_h2b, uuid_b2h, Artist, ArtistCredit, Artist_ArtistCredit, Release, Recording, Session, Track, WavePlot, WavePlotContext
 
 waveplot.schema.setup()
 
-last_query_time = datetime.datetime.now()
+last_query_time = datetime.datetime.utcnow()
 
 def query_mb(url):
-    delta = datetime.datetime.now() - last_query_time
+    delta = datetime.datetime.utcnow() - last_query_time
 
     if delta.seconds == 0:
         time.sleep(delta.microseconds / 1000000)
@@ -40,17 +40,13 @@ def query_mb(url):
 
     return r
 
-
 def process_artist_credit(credit_data, session):
+    # This should probably be replaced with an mbid-based method
+    # Two artist credits which render the same will get mixed up.
     credit_name = "".join(c['name']+c['joinphrase'] for c in credit_data)
-
-    print("CRASH 1")
 
     db_credit = session.query(ArtistCredit).filter_by(name=credit_name).first()
 
-    print("CRASH 2")
-
-    print(credit_name)
     if db_credit is not None:
         return db_credit
 
@@ -67,7 +63,7 @@ def process_artist_credit(credit_data, session):
             session.add(db_artist)
 
         db_artist.name = artist_data['name']
-        db_artist.last_cached = datetime.datetime.now()
+        db_artist.last_cached = datetime.datetime.utcnow()
 
         assoc = Artist_ArtistCredit()
         assoc.credit_name = credit['name']
@@ -78,14 +74,52 @@ def process_artist_credit(credit_data, session):
 
         db_artist.artist_credit_assocs.append(assoc)
 
-    print("CRASH 3")
-
     session.commit()
 
     return db_credit
 
-def update_release(release, session):
-    url = ("http://musicbrainz.org/ws/2/release/" + release.mbid +
+def cache_track(track_mbid_bin, session, rel, track_num, disc_num, rec, track_data = None):
+    if track_data is None:
+        return
+
+    track = session.query(Track).filter_by(mbid_bin = uuid_h2b(track_data['id'])).first()
+
+    if track is None:
+        track = Track(track_data['id'], track_num, disc_num, rel, rec)
+
+    track.cache(track_data)
+    track.artist_credit = process_artist_credit(track_data['artist-credit'],session)
+    session.commit()
+
+    return track
+
+def cache_recording(recording_mbid_bin, session, recording_data = None):
+    if recording_data is None:
+        url = ("http://musicbrainz.org/ws/2/recording/" + uuid_b2h(recording_mbid_bin) +
+                   "?inc=artist-credits&fmt=json")
+
+        try:
+            r = query_mb(url)
+        except requests.ConnectionError:
+            return
+
+        recording_data = r.json()
+
+    rec = session.query(Recording).filter_by(mbid_bin = uuid_h2b(recording_data['id'])).first()
+
+    if rec is None:
+        rec = Recording(recording_data['id'])
+        session.add(rec)
+
+    rec.cache(recording_data)
+    rec.artist_credit = process_artist_credit(recording_data['artist-credit'], session)
+    session.commit()
+
+    return rec
+
+def process_contexts_for_release(release_mbid_bin, session):
+    url = ("http://musicbrainz.org/ws/2/release/"
+           + uuid_b2h(release_mbid_bin) +
            "?inc=recordings artist-credits&fmt=json")
 
     try:
@@ -93,70 +127,53 @@ def update_release(release, session):
     except requests.ConnectionError:
         return
 
-    data = r.json()
+    release_data = r.json()
 
-    cache_time = datetime.datetime.now()
+    rel = session.query(Release).filter_by(mbid_bin = uuid_h2b(release_data['id'])).first()
 
-    release.title = data[u'title']
-    release.last_cached = cache_time
+    if rel is None:
+        rel = Release(release_data['id'])
+        session.add(rel)
 
-    release.artist_credit = process_artist_credit(data[u'artist-credit'], session)
+    rel.cache(release_data)
+    rel.artist_credit = process_artist_credit(release_data['artist-credit'], session)
 
-    update_tracks(release, data['media'], session)
+    # Process contexts
+    contexts = session.query(WavePlotContext).filter_by(release_mbid_bin = release_mbid_bin)
 
+    for wpc in contexts:
+        wp = session.query(WavePlot).filter_by(uuid_bin = wpc.uuid_bin).first()
+
+        if wp is None:
+            continue
+
+        track_data = release_data['media'][wpc.disc_number - 1]['tracks'][wpc.track_number - 1]
+        recording_data = track_data['recording']
+        recording_mbid_bin = uuid_h2b(recording_data['id'])
+
+        if wpc.recording_mbid_bin != recording_mbid_bin:
+            continue
+
+        # Perfect Match, continue
+        rec = cache_recording(wpc.recording_mbid_bin, session, recording_data)
+        track = cache_track(None, session, rel, wpc.track_number, wpc.disc_number, rec, track_data)
+
+        wp.recording = rec
+        wp.track = track
+
+        session.delete(wpc) # Remove the wpc if it's been processed
+
+    rel.calculate_dr()
     session.commit()
-
-def update_tracks(release, media_data, session):
-    for disc_num, medium in enumerate(media_data, start=1):
-        for track_num, track in enumerate(medium['tracks'], start=1):
-            source_db_track = session.query(Track).filter_by(track_number=track_num, disc_number = disc_num, release = release).first()
-
-            if source_db_track is None:
-                continue
-
-            target_db_track = session.query(Track).filter_by(mbid_bin=uuid_h2b(track['id'])).first()
-            if target_db_track is None:
-                target_db_track = Track(track['id'], source_db_track.track_number, source_db_track.disc_number, source_db_track.release, source_db_track.recording)
-
-            else:
-                # Track exists - check if it's the real thing, or just a dummy mbid.
-                if target_db_track.last_cached is None:
-                    # It's not real - swap mbids.
-                    source_db_track.mbid_bin, target_db_track.mbid_bin = target_db_track.mbid_bin, source_db_track.mbid_bin
-                else:
-                    # It is real - merge list of WavePlots then delete
-                    target_db_track.waveplots.extend(source_db_track.waveplots)
-                    session.delete(source_db_track)
-
-            db_track = target_db_track
-
-            for w in target_db_track.waveplots:
-                w.track_mbid_bin = uuid_h2b(track['id'])
-
-            db_track.title = track['title']
-            db_track.last_cached = datetime.datetime.now()
-
-            db_track.artist_credit = process_artist_credit(track['artist-credit'], session)
-
-            session.commit()
-
-
-def update_recording(recording, session):
-    title = Column(UnicodeText(collation='utf8_bin'), nullable = True)
-    waveplot_count = Column(Integer)
-    last_cached = Column(DateTime, nullable = True)
-
-    artist_credit_id = Column(Integer, ForeignKey('artist_credits.id'))
 
 
 session = Session()
 
-rel = session.query(Release).filter(Release.last_cached < datetime.datetime.now()).all()
+contexts = session.query(WavePlotContext).all()
 
-print(rel)
+new_release_mbids = Counter(wpc.release_mbid_bin for wpc in contexts)
 
-for r in rel:
-    update_release(r, session)
-    #Fetch stuff
+for rel_mbid, count in new_release_mbids.most_common():
+    process_contexts_for_release(rel_mbid, session)
 
 session.close()

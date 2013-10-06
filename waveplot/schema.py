@@ -79,18 +79,18 @@ class Artist_ArtistCredit(Base):
 class Artist(Base):
     __tablename__ = 'artists'
 
+    # Cached data
     mbid_bin = Column(BINARY(length=16), primary_key=True)
-
     name = Column(UnicodeText(collation='utf8_bin'))
     last_cached = Column(DateTime, nullable = True)
 
-    artist_credit_assocs = relationship("Artist_ArtistCredit", backref="artist")
+    # Data derived from relationships
+    artist_credit_assocs = relationship("Artist_ArtistCredit", backref="artist", passive_updates=False)
 
     mbid = property(fget=mbid_get, fset=mbid_set)
 
     def __init__(self, mbid):
         self.mbid = mbid
-
 
 class ArtistCredit(Base):
     __tablename__ = 'artist_credits'
@@ -113,40 +113,56 @@ class ArtistCredit(Base):
 class Recording(Base):
     __tablename__ = 'recordings'
 
-    mbid_bin = Column(BINARY(length=16), primary_key=True)
+    # Cached items
+    mbid_bin = Column(BINARY(length=16), primary_key=True) # Cache
+    title = Column(UnicodeText(collation='utf8_bin')) # Cache
+    last_cached = Column(DateTime, nullable = True) # Cache
 
-    title = Column(UnicodeText(collation='utf8_bin'), nullable = True)
-    waveplot_count = Column(Integer)
-    last_cached = Column(DateTime, nullable = True)
-
+    # Data derived from relationships
     artist_credit_id = Column(Integer, ForeignKey('artist_credits.id'))
-
-    tracks = relationship("Track", backref="recording")
-    waveplots = relationship('WavePlot', backref='recording')
-
-
+    tracks = relationship("Track", backref="recording", passive_updates=False)
+    waveplots = relationship('WavePlot', passive_updates=False)
 
     def __init__(self, mbid):
         self.mbid = mbid
-        self.waveplot_count = 0
+
+    def cache(self, recording_data):
+        self.mbid = recording_data['id']
+        self.title = recording_data['title']
+        self.last_cached = datetime.datetime.utcnow()
 
     mbid = property(fget=mbid_get, fset=mbid_set)
 
 class Release(Base):
     __tablename__ = 'releases'
 
-    mbid_bin = Column(BINARY(length=16), primary_key=True)
+    # Cached items
+    mbid_bin = Column(BINARY(length=16), primary_key=True) # Cache
+    title = Column(UnicodeText(collation='utf8_bin')) # Cache
+    last_cached = Column(DateTime, nullable = True) # Cache
 
-    title = Column(UnicodeText(collation='utf8_bin'), nullable = True)
+    # Data derived from relationships
     dr_level = Column(SmallInteger, nullable = True)
-    last_cached = Column(DateTime, nullable = True)
-
-    artist_credit_id = Column(Integer, ForeignKey('artist_credits.id'), nullable = True)
-
-    tracks = relationship("Track", backref="release")
+    artist_credit_id = Column(Integer, ForeignKey('artist_credits.id'))
+    tracks = relationship("Track", backref="release", passive_updates=False)
 
     def __init__(self, mbid):
         self.mbid = mbid
+
+    def cache(self, release_data):
+        self.mbid = release_data['id']
+        self.title = release_data['title']
+        self.last_cached = datetime.datetime.utcnow()
+
+    # Calculate DR. DR should be stored as int with last digit after dp.
+    def calculate_dr(self):
+        average = 0.0
+        for t in self.tracks:
+            t.calculate_dr()
+            average += t.dr_level
+
+        self.dr_level = int(average / len(self.tracks))
+
 
     mbid = property(fget=mbid_get, fset=mbid_set)
 
@@ -154,21 +170,23 @@ class Release(Base):
 class Track(Base):
     __tablename__ = 'tracks'
 
+    # Fixed data
     mbid_bin = Column(BINARY(length=16), primary_key=True)
-
-    title = Column(UnicodeText(collation='utf8_bin'), nullable = True)
     track_number = Column(SmallInteger)
     disc_number = Column(SmallInteger)
+    tempo = Column(SmallInteger, nullable = True)
 
+    # Cached data
+    title = Column(UnicodeText(collation='utf8_bin'))
+    last_cached = Column(DateTime, nullable = True)
+
+    # Derived data
     dr_level = Column(SmallInteger, nullable = True)
-
-    artist_credit_id = Column(Integer, ForeignKey('artist_credits.id'), nullable = True)
+    artist_credit_id = Column(Integer, ForeignKey('artist_credits.id'))
     release_mbid_bin = Column(BINARY(length=16), ForeignKey('releases.mbid_bin'))
     recording_mbid_bin = Column(BINARY(length=16), ForeignKey('recordings.mbid_bin'))
 
-    waveplots = relationship('WavePlot', backref='track')
-
-    last_cached = Column(DateTime, nullable = True)
+    waveplots = relationship('WavePlot', backref='track', passive_updates=False)
 
     def __init__(self, mbid, track_number, disc_number, release, recording):
         self.mbid = mbid
@@ -176,6 +194,18 @@ class Track(Base):
         self.disc_number = disc_number
         self.release_mbid_bin = release.mbid_bin
         self.recording_mbid_bin = recording.mbid_bin
+
+    def cache(self, track_data):
+        self.title = track_data['title']
+        self.last_cached = datetime.datetime.utcnow()
+
+    # Calculate DR. DR should be stored as int with last digit after dp.
+    def calculate_dr(self):
+        average = 0.0
+        for wp in self.waveplots:
+            average += wp.dr_level
+
+        self.dr_level = int(average / len(self.waveplots))
 
     mbid = property(fget=mbid_get, fset=mbid_set)
 
@@ -197,14 +227,14 @@ class WavePlot(Base):
 
     image_sha1 = Column(BINARY(length=20))
     thumbnail_bin = Column(BINARY(length=50))
-    sonic_hash = Column(SmallInteger)
+    sonic_hash = Column(Integer)
 
     version = Column(String(20, collation='ascii_bin'))
     submit_date = Column(DateTime)
 
     editor_id = Column(Integer, ForeignKey('editors.id'))
-    track_mbid_bin = Column(BINARY(length=16), ForeignKey('tracks.mbid_bin'))
-    recording_mbid_bin = Column(BINARY(length=16), ForeignKey('recordings.mbid_bin'))
+    track_mbid_bin = Column(BINARY(length=16), ForeignKey('tracks.mbid_bin'), nullable=True)
+    recording_mbid_bin = Column(BINARY(length=16), ForeignKey('recordings.mbid_bin'), nullable=True)
 
     @property
     def uuid(self):
@@ -218,6 +248,28 @@ class WavePlot(Base):
     def thumbnail_b64(self):
         return base64.b64encode(self.thumbnail_bin)
 
+class WavePlotContext(Base):
+    __tablename__ = 'waveplotcontexts'
+
+    uuid_bin = Column(BINARY(length=16), ForeignKey('waveplots.uuid_bin'), primary_key=True)
+
+    track_number = Column(SmallInteger, nullable = True)
+    disc_number = Column(SmallInteger, nullable = True)
+
+    release_mbid_bin = Column(BINARY(length=16), nullable=True)
+    recording_mbid_bin = Column(BINARY(length=16), nullable=True)
+    track_mbid_bin = Column(BINARY(length=16), nullable=True)
+
+    def __init__(self, uuid_bin):
+        self.uuid = uuid_bin
+
+    @property
+    def uuid(self):
+        return str(uuid.UUID(bytes=self.uuid_bin))
+
+    @uuid.setter
+    def uuid(self, value):
+        self.uuid_bin = uuid.UUID(hex=value).bytes
 
 
 def setup():
