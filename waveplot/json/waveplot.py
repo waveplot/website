@@ -1,131 +1,136 @@
-#!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-from __future__ import division, absolute_import
-import MySQLdb as db
-import json
-import uuid
+# Copyright 2013 Ben Ockmore
 
-from flask import request, Response, make_response
+# This file is part of WavePlot Server.
+
+# WavePlot Server is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# WavePlot Server is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with WavePlot Server. If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import print_function, absolute_import, division
+
+import json
+import datetime
+import uuid
+import os.path
+import base64
+
+from flask import request, make_response
+
+import waveplot.schema
+import waveplot.utils
+import waveplot.image
+
+import redis
 
 from waveplot import app, VERSION
-from waveplot.passwords import passwords
-
-import waveplot.image
-import waveplot.utils
-
-db_con = db.connect(host = passwords['mysql']['host'], user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
-
-def waveplot_list():
-    cur = waveplot.utils.get_cursor(db_con)
-
-    page = int(request.args.get('page', "1"))
-    limit = int(request.args.get('limit', "20"))
-    recording = request.args.get('recording', "")
-
-    barcode = int(request.args['barcode']) if 'barcode' in request.args else None
-    print(barcode)
-
-    offset = (page - 1) * limit
-
-    if not recording:
-        query = "SELECT waveplots.uuid, recordings.cached_title, artist_credits.name, waveplots.thumbnail_data FROM waveplots JOIN (recordings,releases,artist_credits) ON (waveplots.recording_mbid=recordings.mbid AND waveplots.release_mbid=releases.mbid AND releases.cached_artist_credit=artist_credits.id) " + ("" if barcode is None else "WHERE waveplots.audio_barcode=%s ") + "ORDER BY waveplots.submit_date DESC LIMIT %s OFFSET %s"
-        if barcode is None:
-            data = (limit, offset)
-        else:
-            data = (barcode, limit, offset)
-
-    else:
-        query = "SELECT waveplots.uuid, recordings.cached_title, artist_credits.name, waveplots.thumbnail_data FROM waveplots JOIN (recordings,releases,artist_credits) ON (waveplots.recording_mbid=recordings.mbid AND waveplots.release_mbid=releases.mbid AND releases.cached_artist_credit=artist_credits.id) WHERE waveplots.recording_mbid=%s ORDER BY waveplots.submit_date DESC LIMIT %s OFFSET %s"
-
-        data = (recording, limit, offset)
-
-
-
-    cur.execute(query, data)
-
-    rows = cur.fetchall()
-
-    results = list({b"uuid":r[0], b'title':r[1], b'artist':r[2], b"data":r[3]} for r in rows)
-
-    response = make_response(json.dumps(results))
-
-    return response
-
-
-def waveplot_uuid_get(value):
-    cur = waveplot.utils.get_cursor(db_con)
-
-    db_columns = [
-        b'waveplots.uuid',
-        b'waveplots.length',
-        b'waveplots.trimmed_length',
-        b'waveplots.recording_mbid',
-        b'waveplots.release_mbid',
-        b'waveplots.source',
-        b'waveplots.num_channels',
-        b'waveplots.dr_level',
-        b'waveplots.audio_barcode',
-        b'waveplots.track',
-        b'waveplots.disc',
-        b'recordings.cached_title',
-        b'artist_credits.name',
-        b'releases.cached_title' ]
-
-    query = b"SELECT " + b','.join(db_columns) + b" FROM waveplots JOIN (recordings,releases,artist_credits) ON (waveplots.recording_mbid=recordings.mbid AND waveplots.release_mbid=releases.mbid AND releases.cached_artist_credit=artist_credits.id) WHERE uuid=%s"
-    data = (value,)
-
-    info = [u'uuid', u'length', u'trimmed_length', u'recording_mbid', u'release_mbid', u'source', u'num_channels', u'dr_level', u'audio_barcode', u'track', u'disc', u'title', u'artist', u'release_title']
-
-    cur.execute(query, data)
-    rows = cur.fetchall()
-
-    if rows:
-        results = {u'result':u'success', u'waveplot':{}}
-        temp = results[u'waveplot'] = dict(zip(info, rows[0]))
-        temp[u'length'] = waveplot.utils.secsToHMS(temp['length'].total_seconds())
-        temp[u'trimmed_length'] = waveplot.utils.secsToHMS(temp['trimmed_length'].total_seconds())
-        temp[u'dr_level'] = temp[u'dr_level'] / 10
-
-
-        temp[u'recording'] = {u'mbid':temp[u'recording_mbid']}
-        del temp[u'recording_mbid']
-
-        temp[u'release'] = {u'mbid':temp[u'release_mbid'], u'title':temp[u'release_title']}
-        del temp[u'release_mbid']
-        del temp[u'release_title']
-
-        temp[u'preview'] = open(waveplot.image.waveplot_uuid_to_filename(value) + "_preview", 'rb').read()
-
-        response = make_response(json.dumps(results))
-    else:
-        response = make_response(json.dumps({u'result':u'failure', u'error':u"WavePlot unavailable."}))
-
-    return response
-
-def waveplot_uuid_put(value):
-    return 'put'
-
-def waveplot_uuid_delete(value):
-    return 'delete'
-
-def waveplot_uuid(value):
-    if request.method == b'GET':
-        return waveplot_uuid_get(value)
-    elif request.method == b'PUT':
-        return waveplot_uuid_put(value)
-    elif request.method == b'DELETE':
-        return waveplot_uuid_delete(value)
-
-    return "uuid"
+from waveplot.schema import Session, WavePlot, Track, Recording, Editor, WavePlotContext, Release, uuid_h2b, uuid_b2h
 
 @app.route('/json/waveplot/<value>', methods = ['GET', 'PUT', 'DELETE'])
 @waveplot.utils.crossdomain(origin = '*')
 def waveplot_all(value):
-    if value.startswith(b'list'):
+    if value.startswith('list'):
         return waveplot_list()
     else:
         return waveplot_uuid(value)
+
+def waveplot_list():
+    page = int(request.args.get('page', "1"))
+    limit = int(request.args.get('limit', "20"))
+    barcode = int(request.args['barcode']) if 'barcode' in request.args else None
+
+    offset = (page - 1) * limit
+
+    session = Session()
+
+    if 'recording' in request.args:
+        recording = session.query(Recording).filter_by(mbid=request.args['recording']).first()
+
+        if recording is None:
+            return make_response(json.dumps({u'result':u'failure', u'error':u"Recording not in database."}))
+
+        waveplots = recording.waveplots
+    else:
+        waveplots = session.query(WavePlot)
+        if barcode is not None:
+            waveplots = waveplots.filter_by(sonic_hash = barcode)
+
+        waveplots = waveplots.order_by(WavePlot.submit_date.desc()).offset(offset).limit(limit)
+
+    results = [{
+                u"uuid":w.uuid,
+                u'title':w.track.title if w.track is not None else None,
+                u'artist':w.track.recording.artist_credit.name if w.track is not None else None,
+                b"data":base64.b64encode(w.thumbnail_bin)
+               } for w in waveplots]
+
+    session.close()
+
+    return make_response(json.dumps(results))
+
+def waveplot_uuid(value):
+
+    session = Session()
+
+    wp = session.query(WavePlot).filter_by(uuid_bin=uuid_h2b(value)).first()
+
+    if wp is None:
+        response = make_response(json.dumps({u'result':u'failure', u'error':u"No such WavePlot."}))
+
+    track = wp.track
+    release = (track.release if track is not None else None)
+
+    path = waveplot.image.waveplot_uuid_to_filename(value.replace('-', '')) + "_preview"
+    if not os.path.exists(path):
+        response = make_response(json.dumps({u'result':u'failure', u'error':u"Cannot locate WavePlot preview image."}))
+
+    f = open(path, 'rb')
+    preview = base64.b64encode(f.read())
+
+    results = {
+        u'result':u'success',
+        u'waveplot':{
+            u'uuid':wp.uuid,
+            u'length':str(wp.length),
+            u'trimmed_length':str(wp.trimmed_length),
+            u'recording':({
+                u'mbid':uuid_b2h(track.recording_mbid_bin)
+            } if track is not None else None),
+            u'release':({
+                u'mbid':release.mbid,
+                u'title':release.title
+            } if release is not None else None),
+            u'source_type':wp.source_type,
+            u'bit_rate':wp.bit_rate,
+            u'bit_depth':wp.bit_depth,
+            u'sample_rate':wp.sample_rate,
+            u'num_channels':wp.num_channels,
+            u'dr_level':wp.dr_level / 10,
+            u'sonic_hash':wp.sonic_hash,
+            u'track':({
+                u'title':track.title,
+                u'position':track.track_number,
+                u'disc':track.disc_number,
+                u'artist':track.artist_credit.name
+            } if track is not None else None),
+            u'preview':preview,
+            u'sonic_hash':wp.sonic_hash
+        }
+    }
+
+    session.close()
+
+    return make_response(json.dumps(results))
 
 @app.route('/json/waveplot', methods = ['POST'])
 @waveplot.utils.crossdomain(origin = '*')
@@ -133,80 +138,77 @@ def waveplot_post():
     if request.form.get('version', None) != VERSION:
         return make_response(json.dumps({u'result':u'failure', u'error':u"Incorrect client version or no version provided."}))
 
-    cur = waveplot.utils.get_cursor(db_con)
+    session = Session()
 
-    f = dict((k, v) for (k, v) in request.form.iteritems())
+    wp = WavePlot()
+    wp.version = VERSION
+    wp.submit_date = datetime.datetime.utcnow()
 
-    required_data = [b'recording', b'release', b'track', b'disc', b'image', b'source',
-        b'num_channels', b'length', b'trimmed', b'editor', b'dr_level']
+    f = request.form.to_dict()
 
-    for a in required_data:
-        if a not in f:
-            return make_response(json.dumps({u'result':u'failure', u'error':u"Required data not provided. ({})".format(a.encode('ascii'))}))
+    required_data = {'recording', 'release', 'track', 'disc', 'image', 'source_type', 'sample_rate', 'bit_depth', 'bit_rate',
+        'num_channels', 'length', 'length_trimmed', 'editor', 'dr_level'}
 
-    f[b'length'] = int(f[b'length'])
-    f[b'trimmed'] = int(f[b'trimmed'])
+    l = [a for a in required_data if a not in f]
+    if l:
+        return make_response(json.dumps({u'result':u'failure', u'error':u"Required data not provided. ({})".format(",".join(l))}))
 
-    image = waveplot.image.WavePlotImage(f[b'image'])
-    image_hash = image.sha1_hex()
-
-    # Check for existing identical waveplot
-    cur.execute("SELECT uuid FROM waveplots WHERE image_hash=%s", (image_hash,))
-    rows = cur.fetchall()
-
-    if len(rows) > 0:
-        return make_response(json.dumps({u'result':u'success', u'uuid':rows[0][0]}))
-
-    cur.execute("SELECT id FROM editors WHERE activation_key=%s", (f['editor'],))
-    rows = cur.fetchall()
-
-    if len(rows) == 0:
+    editor = session.query(Editor).filter_by(key=f['editor']).first()
+    if editor is None:
         return make_response(json.dumps({u'result':u'failure', u'error':u"Bad editor key ({})".format(f['editor'])}))
 
-    editor = rows[0][0]
+    image = waveplot.image.WavePlotImage(f['image'])
+
+    wp.image_sha1 = image.sha1.digest()
+
+    # Check for existing identical waveplot
+    existing = session.query(WavePlot).filter_by(image_sha1 = image.sha1).first()
+    if existing is not None:
+        return make_response(json.dumps({u'result':u'exists', u'uuid':existing.uuid}))
 
     generated_uuid = uuid.uuid4()
-    cur.execute("SELECT uuid FROM waveplots WHERE uuid='{}'".format(generated_uuid.hex))
-    while len(cur.fetchall()) != 0:
+    while session.query(WavePlot).filter_by(uuid = generated_uuid).count():
         generated_uuid = uuid.uuid4()
-        cur.execute("SELECT uuid FROM waveplots WHERE uuid='{}'".format(generated_uuid.hex))
+
+    wp.uuid_bin = generated_uuid.bytes
+
+    wp.editor_id = editor.id
+
+    wp.length = datetime.timedelta(seconds=int(f['length']))
+    wp.trimmed_length = datetime.timedelta(seconds=int(f['length_trimmed']))
 
     image.generate_image_data()
 
-    query = "INSERT INTO waveplots \
-        (uuid,length,trimmed_length,editor_id,recording_mbid, release_mbid,\
-        track,disc,image_hash,source,num_channels,version,dr_level,thumbnail_data) \
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-    data = (generated_uuid.hex, waveplot.utils.secsToHMS(f['length']),
-        waveplot.utils.secsToHMS(f['trimmed']), editor, f['recording'],
-        f['release'], f['track'], f['disc'], image_hash, f['source'],
-        f['num_channels'], VERSION, int(float(f['dr_level']) * 10.0), image.b64_thumb)
-    cur.execute(query, data)
+    # Image Data in DB
+    wp.thumbnail_bin = image.thumb_data
+    wp.sonic_hash = image.sonic_hash
+    print(wp.sonic_hash)
 
-    cur.execute(u"SELECT waveplot_count FROM recordings WHERE mbid=%s", (f['recording'],))
-    rows = cur.fetchall()
+    # Sonic properties
+    wp.num_channels = int(f['num_channels'])
+    wp.dr_level = int(float(f['dr_level']) * 10)
 
-    if len(rows) == 0:
-        cur.execute(u"INSERT INTO recordings VALUES (%s,%s,%s)", (f['recording'], None, 1))
-    else:
-        cur.execute(u"UPDATE recordings SET waveplot_count=%s WHERE mbid=%s", (rows[0][0] + 1, f['recording']))
+    wp.source_type = f['source_type']
+    wp.sample_rate = f['sample_rate']
+    wp.bit_depth = f['bit_depth']
+    wp.bit_rate = f['bit_rate']
 
-    cur.execute(u"SELECT tracks, dr_level FROM releases WHERE mbid=%s", (f['release'],))
-    result = cur.fetchall()
+    wpc = WavePlotContext(wp.uuid)
 
-    if len(result) == 0:
-        cur.execute(u"INSERT INTO releases (mbid, dr_level) VALUES (%s,%s)", (f['release'], int(float(f['dr_level']) * 10.0)))
-    else:
-        rel_tracks = result[0][0]
-        rel_dr_level = result[0][1]
-        rel_dr_level *= rel_tracks
-        rel_dr_level += int(float(f['dr_level']) * 10.0)
-        rel_tracks += 1
-        rel_dr_level /= rel_tracks
-        cur.execute(u"UPDATE releases SET dr_level=%s,tracks=%s WHERE mbid=%s", (rel_dr_level, rel_tracks, f['release']))
-
-    db_con.commit()
+    wpc.release_mbid_bin = uuid_h2b(f['release'])
+    wpc.recording_mbid_bin = uuid_h2b(f['recording'])
+    wpc.track_number = f['track']
+    wpc.disc_number = f['disc']
 
     image.save(generated_uuid.hex)
 
-    return make_response(json.dumps({u'result':u'success', u'uuid':generated_uuid.hex}))
+    session.add(wp)
+    session.commit()
+    session.add(wpc)
+
+    result_uuid = wp.uuid
+
+    session.commit()
+    session.close()
+
+    return make_response(json.dumps({u'result':u'success', u'uuid':result_uuid}))

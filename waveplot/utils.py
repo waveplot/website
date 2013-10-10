@@ -1,47 +1,32 @@
-#!/usr/bin/env python
 # -*- coding: utf8 -*-
-
-from __future__ import division, absolute_import
-import MySQLdb as db
-from waveplot.passwords import passwords
-
-from datetime import timedelta
-from flask import make_response, request, current_app
-from functools import update_wrapper
 
 import smtplib
 
-def secsToHMS(secs):
-    mins = secs // 60
-    secs -= 60 * mins
+from datetime import timedelta
+from functools import update_wrapper
 
-    hours = mins // 60
-    mins -= 60 * hours
-    return "{:02.0f}:{:02.0f}:{:02.0f}".format(hours, mins, secs)
+from flask import make_response, request, current_app
 
-def get_cursor(db_con, use_dict = False):
-    try:
-        if use_dict:
-            result = db_con.cursor(db.cursors.DictCursor)
-        else:
-            result = db_con.cursor()
+from waveplot.passwords import passwords
 
-        result.execute("USE waveplot")
-        db_con.commit()
+def SendEmail(recipient, subject, message):
+    session = smtplib.SMTP('smtp.gmail.com', 587)
+    session.ehlo()
+    session.starttls()
+    session.ehlo()
+    session.login(passwords['email']['username'], passwords['email']['password'])
 
-        return result
-    except db.OperationalError:
-        db_con = db.connect(host = passwords['mysql']['host'], user = passwords['mysql']['username'], passwd = passwords['mysql']['password'], db = 'waveplot', use_unicode = True, charset = "utf8")
+    headers = ["from: " + passwords['email']['username'],
+               "subject: " + subject,
+               "to: " + recipient,
+               "mime-version: 1.0",
+               "content-type: text/html"]
 
-        if use_dict:
-            result = db_con.cursor(db.cursors.DictCursor)
-        else:
-            result = db_con.cursor()
+    headers = "\r\n".join(headers)
 
-        result.execute("USE waveplot")
-        db_con.commit()
+    session.sendmail(passwords['email']['username'], recipient, headers + "\r\n\r\n" + message)
+    session.quit()
 
-        return result
 
 def crossdomain(origin = None, methods = None, headers = None,
                 max_age = 21600, attach_to_all = True,
@@ -83,21 +68,3 @@ def crossdomain(origin = None, methods = None, headers = None,
         f.provide_automatic_options = False
         return update_wrapper(wrapped_function, f)
     return decorator
-
-def SendEmail(recipient, subject, message):
-    session = smtplib.SMTP('smtp.gmail.com', 587)
-    session.ehlo()
-    session.starttls()
-    session.ehlo()
-    session.login(passwords['email']['username'], passwords['email']['password'])
-
-    headers = ["from: " + passwords['email']['username'],
-               "subject: " + subject,
-               "to: " + recipient,
-               "mime-version: 1.0",
-               "content-type: text/html"]
-
-    headers = "\r\n".join(headers)
-
-    session.sendmail(passwords['email']['username'], recipient, headers + "\r\n\r\n" + message)
-    session.quit()

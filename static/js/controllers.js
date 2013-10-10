@@ -34,11 +34,24 @@ function WavePlotUUIDCtrl($scope, $routeParams, $http){
       if(data.result == "success"){
          $scope.data = data.waveplot;
 
-         $scope.data.source = $scope.data.source.toUpperCase();
-         if($scope.data.source.indexOf("FLAC") != -1)
-         {
-            $scope.data.source = $scope.data.source.substr(0,4);
+         $scope.data.source_type = $scope.data.source_type.toUpperCase();
+
+         if($scope.data.source_type == "FLAC" && $scope.data.bit_rate == 0){
+             $scope.data.bit_rate = "N/A";
          }
+
+         var temp = $scope.data.sonic_hash;
+         var recvd = temp;
+         $scope.data.sonic_hash = "[";
+         for(var i = 0; i != 16; i++){
+            if(temp & 0x8000) {
+                $scope.data.sonic_hash += "#";
+            } else {
+                $scope.data.sonic_hash += "_";
+            }
+            temp = (temp << 1) & 0xFFFE;
+         }
+         $scope.data.sonic_hash += "] (" + recvd + ")";
 
          $scope.element = {
             "uuid":$scope.uuid,
