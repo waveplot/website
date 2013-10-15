@@ -31,10 +31,8 @@ import waveplot.schema
 import waveplot.utils
 import waveplot.image
 
-import redis
-
 from waveplot import app, VERSION
-from waveplot.schema import Session, WavePlot, Track, Recording, Editor, WavePlotContext, Release, uuid_h2b, uuid_b2h
+from waveplot.schema import Session, WavePlot, Track, Recording, Editor, Editor_WavePlot, WavePlotContext, Release, uuid_h2b, uuid_b2h
 
 @app.route('/json/waveplot/<value>', methods = ['GET', 'PUT', 'DELETE'])
 @waveplot.utils.crossdomain(origin = '*')
@@ -65,7 +63,7 @@ def waveplot_list():
         if barcode is not None:
             waveplots = waveplots.filter_by(sonic_hash = barcode)
 
-        waveplots = waveplots.order_by(WavePlot.submit_date.desc()).offset(offset).limit(limit)
+        waveplots = waveplots.order_by(WavePlot.uuid_bin.asc()).offset(offset).limit(limit)
 
     results = [{
                 u"uuid":w.uuid,
