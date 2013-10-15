@@ -70,7 +70,7 @@ def process_artist_credit(credit_data, session):
         assoc.join_phrase = credit['joinphrase']
         assoc.position = pos
 
-        assoc.child = db_credit
+        assoc.artist_credit = db_credit
 
         db_artist.artist_credit_assocs.append(assoc)
 
@@ -130,6 +130,9 @@ def cache_release(release_mbid_bin, session, release_data = None):
             return
 
         release_data = r.json()
+
+    if "id" not in release_data:
+        print(release_data)
 
     rel = session.query(Release).filter_by(mbid_bin = uuid_h2b(release_data['id'])).first()
 

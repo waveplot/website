@@ -45,6 +45,16 @@ def mbid_get(self):
 def mbid_set(self, value):
     self.mbid_bin = uuid_h2b(value)
 
+class Editor_WavePlot(Base):
+    __tablename__ = 'editor_waveplot'
+
+    editor_id = Column(Integer, ForeignKey('editors.id'), primary_key=True)
+    waveplot_uuid_bin = Column(BINARY(length=16), ForeignKey('waveplots.uuid_bin'), primary_key=True)
+
+    submit_date = Column(DateTime)
+
+    waveplot = relationship("WavePlot", backref="editor_assocs")
+
 class Editor(Base):
     __tablename__ = 'editors'
 
@@ -56,7 +66,7 @@ class Editor(Base):
     key = Column(BigInteger)
     activated = Column(Boolean)
 
-    waveplots = relationship("WavePlot", backref="editor")
+    waveplot_assocs = relationship("Editor_WavePlot", backref='editor')
 
     def __init__(self, name, email, key, activated = False):
         self.name = name
@@ -67,14 +77,14 @@ class Editor(Base):
 class Artist_ArtistCredit(Base):
     __tablename__ = 'artist_artist_credit'
 
-    left_id = Column(BINARY(length=16), ForeignKey('artists.mbid_bin'))
-    right_id = Column(Integer, ForeignKey('artist_credits.id'), primary_key=True)
+    artist_mbid = Column(BINARY(length=16), ForeignKey('artists.mbid_bin'))
+    artist_credit_id = Column(Integer, ForeignKey('artist_credits.id'), primary_key=True)
 
     credit_name = Column(UnicodeText(collation='utf8_bin'))
     position = Column(SmallInteger(), primary_key=True, autoincrement=False)
     join_phrase = Column(UnicodeText(collation='utf8_bin'))
 
-    child = relationship("ArtistCredit", backref="artist_assocs")
+    artist_credit = relationship("ArtistCredit", backref="artist_assocs")
 
 class Artist(Base):
     __tablename__ = 'artists'
@@ -230,9 +240,7 @@ class WavePlot(Base):
     sonic_hash = Column(Integer)
 
     version = Column(String(20, collation='ascii_bin'))
-    submit_date = Column(DateTime)
 
-    editor_id = Column(Integer, ForeignKey('editors.id'))
     track_mbid_bin = Column(BINARY(length=16), ForeignKey('tracks.mbid_bin'), nullable=True)
     recording_mbid_bin = Column(BINARY(length=16), ForeignKey('recordings.mbid_bin'), nullable=True)
 
