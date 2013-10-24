@@ -2,46 +2,104 @@
 <html lang="en" data-ng-app="waveplot">
     <head>
         <title>WavePlot</title>
-        <meta name="google-site-verification" content="m0f5ZgQeuknZ4Zcqnu4PV11M0DKnUjBZ6ByxcFcKrTc" />
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- Bootstrap -->
-
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="icon" type="image/ico" href="/img/favicon.ico">
+        <!-- Google Analytics tracking code -->
+        <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-        <link rel="stylesheet" href="/css/bootstrap.min.css" media="screen" type="text/css">
-
-        <!-- Turns out JQuery is required for $http methods. -->
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
-
-        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.6/angular.min.js"></script>
-        <script src="/js/ui-bootstrap-tpls-0.3.0.min.js"></script>
+            ga('create', 'UA-44816251-1', 'waveplot.net');
+            ga('send', 'pageview');
+        </script>
+        <!-- BootStrap 3 -->
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+        <!-- Custom Stylesheet -->
+        <link rel="stylesheet" href="/css/custom.css">
+        <!-- JQuery 2.0 -->
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+        <!-- BootStrap 3 JS -->
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+        <!-- Angular JS 1.0 -->
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+        <!-- Angular UI Bootstrap 0.6 -->
+        <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.6.0/ui-bootstrap-tpls.min.js"></script>
+        <!-- Angular Translate -->
+        <script src="/js/angular-translate.min.js"></script>
 
         <script src="/js/app.js"></script>
         <script src="/js/controllers.js"></script>
     </head>
-
     <body data-ng-controller="MainCtrl">
-        <div class="container" style="margin-top:5%">
-            <div class="row">
-                <div class="span4">
-               <div class="text-center"><img src="/img/waveplot.png" alt="WavePlot Logo" width="200" height="200" /></div><br/>
-
-                    <ul class="nav nav-pills nav-stacked">
-                        <li data-ng-repeat="navlink in navlinks" data-ng-class="navlink.active" data-ng-click="setRoute(navlink.id)"><a href="">{{navlink.title}}</a></li>
-                    </ul>
-
-               <!--input type="text" class="input-xlarge search-query" data-ng-model="search"/>
-                    <br/-->
-
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">
+                        <!--div-->
+                        <img src="/img/waveplot-small.png" alt="" style="height:1em; vertical-align:top; margin-right:.2em;"></img>
+                        <span style="color:#feb958">Wave</span><span style="color:#feb958">Plot</span>
+                        <!--/div-->
+                    </a>
                 </div>
-                <div class="span8" style="text-align:justify;" data-ng-view>
-               <noscript>
-                   <div class="alert">
-                      <center><strong><a href="http://simple.wikipedia.org/wiki/JavaScript">JavaScript</a> disabled!</strong> Please use a JavaScript-enabled browser to view this site.</center>
-                   </div>
-                   </noscript>
+                <div class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav">
+                        <li><a href="#">Help</a></li>
+                        <li><a href="#">Downloads</a></li>
+                        <li class="dropdown">
+                            <a data-toggle="dropdown" href="#">Browse <b class="caret"></b></a>
+                            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                                <li><a href="#"><span class="glyphicon glyphicon-user" style="margin-right:1em;"></span>Artists</a></li>
+                                <li><a href="#"><span class="glyphicon glyphicon-th" style="margin-right:1em;"></span>Albums</a></li>
+                                <li><a href="#"><span class="glyphicon glyphicon-list" style="margin-right:1em;"></span>Songs</a></li>
+                                <li><a href="#"><span class="glyphicon glyphicon-volume-up" style="margin-right:1em;"></span>Dynamic Range</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="#"><span class="glyphicon glyphicon-stats"></span></a></li>
+                        <li class="dropdown">
+                            <a data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-globe"></span></a>
+                            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                                <li><a href="#" ng-click="changeLanguage('en');">English <span class="glyphicon glyphicon-ok-sign" style="color:green"></span></a></li>
+                                <li><a href="#" ng-click="changeLanguage('fr');">Français <span class="glyphicon glyphicon-exclamation-sign"></span></a></li>
+                                <li><a href="#" ng-click="changeLanguage('de');">Deutsch <span class="glyphicon glyphicon-exclamation-sign"></span></a></li>
+                                <li><a href="#" ng-click="changeLanguage('es');">Español <span class="glyphicon glyphicon-exclamation-sign"></span></a></li>
+                                <li><a href="#" ng-click="changeLanguage('cn');">普通话 <span class="glyphicon glyphicon-exclamation-sign"></span></a></li>
+                                <li><a href="#" ng-click="changeLanguage('jp');">日本語 <span class="glyphicon glyphicon-exclamation-sign"></span></a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <form class="navbar-form navbar-right">
+                        <div class="form-group">
+                            <input type="text" placeholder="Search" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-search"></span></button>
+                    </form>
+                </div>
+                <!--/.nav-collapse -->
             </div>
-         </div>
-      </div>
+        </div>
+
+        <div data-ng-view>
+        </div>
+        <noscript>
+        <div class="container">
+
+            <div class="row" style="text-align:justify;" >
+                    <div class="alert">
+                        <center><strong><a href="http://simple.wikipedia.org/wiki/JavaScript">JavaScript</a> disabled!</strong> Please use a JavaScript-enabled browser to view this site.</center>
+                    </div>
+            </div>
+
+        </div>
+                        </noscript>
     </body>
 </html>
