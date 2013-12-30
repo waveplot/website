@@ -206,8 +206,9 @@ function RegisterCtrl($scope,$http){
          $scope.input_error = true;
       } else {
          $scope.input_error = false;
+         $scope.submitted = true;
+         $scope.result = {"class":"alert-info","text":"Please wait..."};
          $http.post(server+'/json/editor',"username="+$scope.username+"&email="+$scope.email).success(function(data) {
-            $scope.submitted = true;
             if(data.result == 'success'){
                $scope.result = {"class":"alert-success","text":"Successfully registered! Please await your activation email!"};
             } else if(data.error != undefined) {

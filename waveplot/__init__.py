@@ -35,7 +35,7 @@ if os.getenv('WAVEPLOT_SETTINGS') is not None:
     app.config.from_envvar('WAVEPLOT_SETTINGS')
 
 
-
+import waveplot.json.homepage_data
 import waveplot.json.editor
 import waveplot.json.recording
 import waveplot.json.release

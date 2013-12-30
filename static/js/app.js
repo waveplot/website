@@ -33,10 +33,10 @@ function MainCtrl($scope, $location) {
     $scope.navlinks = [
       { "id":0, "title":"Home", "url":"/", "active":"" },
       { "id":1, "title":"List WavePlots", "url":"/list/waveplot", "active":"" },
-     { "id":2, "title":"Recordings with Multiple Waveplots", "url":"/list/recording", "active":"" },
-     { "id":3, "title":"Extreme D.R.", "url":"/extreme-dr", "active":"" },
-     { "id":4, "title":"Register!", "url":"/register", "active":"" },
-     { "id":5, "title":"Get Started!", "url":"/get-started", "active":"" }
+     //{ "id":2, "title":"Recordings with Multiple Waveplots", "url":"/list/recording", "active":"" },
+     { "id":2, "title":"Extreme D.R.", "url":"/extreme-dr", "active":"" },
+     { "id":3, "title":"Register!", "url":"/register", "active":"" },
+     { "id":4, "title":"Get Started!", "url":"/get-started", "active":"" }
     ]
 
    $scope.current_page = null;

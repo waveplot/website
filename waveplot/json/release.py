@@ -29,6 +29,28 @@ import waveplot.utils
 from waveplot import app
 from waveplot.schema import Session, Release
 
+@app.route('/json/release', methods = ['GET'])
+@waveplot.utils.crossdomain(origin = '*')
+def release():
+    offset = int(request.args.get('offset', "0"))
+    limit = int(request.args.get('limit', "24"))
+
+    session = Session()
+
+    releases = session.query(Release).order_by(Release.title.asc()).offset(offset).limit(limit)
+
+    data = [
+        {
+            'id':r.mbid,
+            'title':r.title,
+            'url':None
+        } for r in releases.all()
+    ]
+
+    session.close()
+
+    return make_response(json.dumps(data))
+
 @app.route('/json/extreme-dr', methods = ['GET'])
 @waveplot.utils.crossdomain(origin = '*')
 def extreme_dr():
@@ -42,5 +64,7 @@ def extreme_dr():
     releases = session.query(Release).order_by(Release.dr_level.asc()).limit(10)
 
     lowest = [{u'title':r.title, u'artist':r.artist_credit.name, u'mbid':r.mbid, u'dr_level':r.dr_level / 10} for r in releases]
+
+    session.close()
 
     return make_response(json.dumps({u'highest':highest, u'lowest':lowest}))
