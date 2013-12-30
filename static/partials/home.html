@@ -7,41 +7,37 @@
 </div>
 
 <div class="container">
-<p>
-    You can use the search box on the left to look up one of the
-    recordings in our database, or alternatively select <a href="#">List
-    Recordings</a>.
-</p>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Latest News <a href="https://twitter.com/WavePlot" class="pull-right">
+                    <span class="fa fa-twitter"></span> more...</a></h3>
+                </div>
 
-<p>
-    <a href="#">Extreme DRs</a> showcases one of the more interesting features of
-    WavePlots - automatic DR Meter compatible dynamic range levels.
-</p>
+                <!-- List group -->
+                <ul class="list-group">
+                    <li class="list-group-item" data-ng-repeat="tweet in tweets" data-ng-bind-html-unsafe="'<small>'+tweet+'</small>'"></li>
+                </ul>
+            </div>      
+        </div>
+        <div class="col-md-4">
+            <!-- List group -->
+            <ul class="list-group">
+                <li class="list-group-item" data-ng-repeat="tweet in tweets" data-ng-bind-html-unsafe="'<small>'+tweet+'</small>'"></li>
+            </ul>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Recent Activity <a href=""><span class="pull-right glyphicon glyphicon-refresh"></span></a></h3>
+                </div>
 
-<h3>How It Works</h3>
-<p>
-    WavePlot currently has two main components, called
-    WavePlotImager and scanner.py. WavePlotImager is a program written
-    in the C programming language, which can calculate a WavePlot for
-    almost any audio file. scanner.py is a Python script file which
-    recurses over some directory filled with music, runs WavePlotImager
-    on each file, and submits it to the server.
-</p>
-
-<p>
-    If you're interested in writing your own submission tool,
-    scanner.py is the place to borrow code from. I'm going to be
-    writing plugins for Picard and beets, among others, in the near
-    future, so stay tuned!
-</p>
-
-<p>
-    In order to submit any WavePlots, you need an editor ID. You can
-    get one of these by hitting <a href="#">Register!</a> on the left, agreeing to
-    cookies on the site, and providing a valid email address. The
-    activation code will then get emailed to you - it is the number in
-    the link in the email. You'll need to click the link, and then copy
-    and paste that number into the terminal/command prompt when
-    scanner.py asks for it.
-</p>
+                <!-- List group -->
+                <ul class="list-group">
+                    <li class="list-group-item" data-ng-repeat="tweet in tweets" data-ng-bind-html-unsafe="'<small>'+tweet+'</small>'"></li>
+                </ul>
+            </div>      
+        </div>
+    </div>
 </div>
