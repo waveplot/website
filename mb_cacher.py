@@ -23,6 +23,8 @@ import requests
 import time
 from collections import Counter
 
+from sqlalchemy import func
+
 import waveplot.schema
 from waveplot.schema import uuid_h2b, uuid_b2h, Artist, ArtistCredit, Artist_ArtistCredit, Release, Recording, Session, Track, WavePlot, WavePlotContext
 
@@ -31,11 +33,14 @@ waveplot.schema.setup()
 last_query_time = datetime.datetime.utcnow()
 
 def query_mb(url):
+    global last_query_time
+    
     delta = datetime.datetime.utcnow() - last_query_time
 
     if delta.seconds == 0:
-        time.sleep(delta.microseconds / 1000000)
+        time.sleep(1.0 - (float(delta.microseconds) / 1000000.0))
 
+    last_query_time = datetime.datetime.utcnow()
     r = requests.get(url)
 
     return r
@@ -102,9 +107,12 @@ def cache_recording(recording_mbid_bin, session, recording_data = None):
         try:
             r = query_mb(url)
         except requests.ConnectionError:
-            return
+            return (None, None)
 
-        recording_data = r.json()
+        try:
+            recording_data = r.json()
+        except ValueError:
+            return (None, None)
 
     rec = session.query(Recording).filter_by(mbid_bin = uuid_h2b(recording_data['id'])).first()
 
@@ -127,12 +135,16 @@ def cache_release(release_mbid_bin, session, release_data = None):
         try:
             r = query_mb(url)
         except requests.ConnectionError:
-            return
+            return (None, None)
 
-        release_data = r.json()
+        try:
+            release_data = r.json()
+        except ValueError:
+            return (None, None)
 
     if "id" not in release_data:
         print(release_data)
+        return (None, None)
 
     rel = session.query(Release).filter_by(mbid_bin = uuid_h2b(release_data['id'])).first()
 
@@ -149,9 +161,17 @@ def cache_release(release_mbid_bin, session, release_data = None):
 
 def cache_release_and_associated_entities(release, session):
     release_data = cache_release(release.mbid_bin, session)[1]
+
+    if release_data is None:
+        return
+
     for t in release.tracks:
         track_data = release_data['media'][t.disc_number-1]['tracks'][t.track_number-1]
         rec = cache_recording(t.recording_mbid_bin, session, track_data['recording'])[0]
+
+        if rec is None:
+            continue
+
         cache_track(t.mbid_bin, session, release, t.track_number, t.disc_number, rec, track_data)
 
     session.commit()
@@ -159,6 +179,9 @@ def cache_release_and_associated_entities(release, session):
 def process_contexts_for_release(release_mbid_bin, session):
 
     rel, release_data = cache_release(release_mbid_bin, session)
+
+    if release_data is None:
+        return
 
     # Process contexts
     contexts = session.query(WavePlotContext).filter_by(release_mbid_bin = release_mbid_bin)
@@ -169,20 +192,28 @@ def process_contexts_for_release(release_mbid_bin, session):
         if wp is None:
             continue
 
-        track_data = release_data['media'][wpc.disc_number - 1]['tracks'][wpc.track_number - 1]
-        recording_data = track_data['recording']
+        try:
+            track_data = release_data['media'][wpc.disc_number - 1]['tracks'][wpc.track_number - 1]
+        except IndexError:
+            pass
+        else:
+            recording_data = track_data['recording']
 
-        if wpc.recording_mbid_bin != uuid_h2b(recording_data['id']):
-            continue
+            if wpc.recording_mbid_bin != uuid_h2b(recording_data['id']):
+                continue
 
-        # Perfect Match, continue
-        rec = cache_recording(wpc.recording_mbid_bin, session, recording_data)[0]
-        track = cache_track(None, session, rel, wpc.track_number, wpc.disc_number, rec, track_data)[0]
+            # Perfect Match, continue
+            rec = cache_recording(wpc.recording_mbid_bin, session, recording_data)[0]
 
-        wp.recording = rec
-        wp.track = track
+            if rec is None:
+                continue
 
-        session.delete(wpc) # Remove the wpc if it's been processed
+            track = cache_track(None, session, rel, wpc.track_number, wpc.disc_number, rec, track_data)[0]
+
+            wp.recording = rec
+            wp.track = track
+
+            session.delete(wpc) # Remove the wpc if it's been processed
 
     rel.calculate_dr()
     session.commit()
@@ -196,14 +227,18 @@ while 1:
     if idle:
         time.sleep(5) # Sleep for 30 seconds if things haven't just been processing
 
-    contexts = session.query(WavePlotContext).all()
+    contexts = session.query(WavePlotContext.release_mbid_bin, func.count(WavePlotContext.release_mbid_bin)).group_by(WavePlotContext.release_mbid_bin).all()
 
-    new_release_mbids = Counter(wpc.release_mbid_bin for wpc in contexts)
+    idle = not contexts
 
-    idle = not new_release_mbids
+    if contexts:
+        contexts.sort(key = lambda x: x[1], reverse = True)
 
-    for rel_mbid, count in new_release_mbids.most_common():
-        process_contexts_for_release(rel_mbid, session)
+        i = 0
+        for rel_mbid, count in contexts:
+            process_contexts_for_release(rel_mbid, session)
+            i += 1
+            print("Processed {}/{}".format(i,len(contexts)))
 
     release = session.query(Release).order_by(Release.last_cached.asc()).first()
 

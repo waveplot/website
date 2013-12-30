@@ -101,4 +101,3 @@ function MainCtrl($scope, $location, $translate, $translatePartialLoader) {
 
 
 }
-

@@ -53,6 +53,8 @@ def recording_mbid_get(value):
     for track in tracks:
         results[u'waveplots'].extend({u'uuid':w.uuid, u'audio_barcode':w.audio_barcode} for w in track.waveplots)
 
+    session.close()
+
     return make_response(json.dumps(results))
 
 def recording_list():
@@ -64,8 +66,11 @@ def recording_list():
 
     offset = (page - 1) * limit
 
-    recordings = session.query(Recording).filter(Recording.waveplot_count >= min_linked_waveplots).offset(offset).limit(limit)
+    """recordings = session.query(Recording).filter(Recording.waveplot_count >= min_linked_waveplots).offset(offset).limit(limit)
 
-    results = [{u"mbid":r.mbid, u'count':r.waveplot_count} for r in recordings]
+    results = [{u"mbid":r.mbid, u'count':r.waveplot_count} for r in recordings]"""
+    results = []
+
+    session.close()
 
     return make_response(json.dumps(results))
