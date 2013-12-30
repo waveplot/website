@@ -27,6 +27,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref, sessionmaker
 from sqlalchemy import Column, Integer, BigInteger, UnicodeText, Boolean, SmallInteger, BINARY, ForeignKey, Interval, String, DateTime
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from waveplot.passwords import passwords
 
@@ -166,13 +167,14 @@ class Release(Base):
 
     # Calculate DR. DR should be stored as int with last digit after dp.
     def calculate_dr(self):
-        average = 0.0
-        for t in self.tracks:
-            t.calculate_dr()
-            average += t.dr_level
+        num_tracks = len(self.tracks)
+        if num_tracks > 0:
+            average = 0.0
+            for t in self.tracks:
+                t.calculate_dr()
+                average += t.dr_level
 
-        self.dr_level = int(average / len(self.tracks))
-
+            self.dr_level = int(average / num_tracks)
 
     mbid = property(fget=mbid_get, fset=mbid_set)
 
@@ -211,11 +213,13 @@ class Track(Base):
 
     # Calculate DR. DR should be stored as int with last digit after dp.
     def calculate_dr(self):
-        average = 0.0
-        for wp in self.waveplots:
-            average += wp.dr_level
+        num_waveplots = len(self.waveplots)
+        if num_waveplots > 0:
+            average = 0.0
+            for wp in self.waveplots:
+                average += wp.dr_level
 
-        self.dr_level = int(average / len(self.waveplots))
+            self.dr_level = int(average / num_waveplots)
 
     mbid = property(fget=mbid_get, fset=mbid_set)
 
@@ -281,7 +285,7 @@ class WavePlotContext(Base):
 
 
 def setup():
-    engine = create_engine('mysql://{}:{}@{}/waveplot_alchemy'.format(passwords['mysql']['username'],passwords['mysql']['password'],passwords['mysql']['host']))
+    engine = create_engine('mysql://{}:{}@{}/waveplot_alchemy'.format(passwords['mysql']['username'],passwords['mysql']['password'],passwords['mysql']['host']), pool_recycle = 14400)
 
     Base.metadata.create_all(engine)
 
