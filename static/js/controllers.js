@@ -1,8 +1,29 @@
 'use strict';
 
-var server = 'http://waveplot.net:19048';
+var server = 'http://dev.waveplot.net:19048';
 
-function HomeCtrl($scope) {
+function HomeCtrl($scope, $http, $translate, $translatePartialLoader) {
+   delete $http.defaults.headers.common['X-Requested-With'];
+   
+    $scope.items = [];
+
+    $scope.loadMoreItems = function(){
+        for(var i = 0; i != 20; i++){
+            $scope.items.push({"name":"Item" + i.toString()});
+        }
+    };
+    
+    $http.get(server+'/json/tweets').success(function (data) {
+      $scope.tweets = data;
+      $scope.loaded = true;
+   });
+}
+
+HomeCtrl.resolve = {
+    lang: function($translate, $translatePartialLoader, $q){
+        $translatePartialLoader.addPart('home');
+        return $translate.refresh();
+    }
 }
 
 function ExtremeDRCtrl($scope, $http){

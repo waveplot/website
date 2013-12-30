@@ -29,6 +29,7 @@ import waveplot.utils
 from waveplot import app
 from waveplot.schema import Session, Release
 
+
 @app.route('/json/extreme-dr', methods = ['GET'])
 @waveplot.utils.crossdomain(origin = '*')
 def extreme_dr():
