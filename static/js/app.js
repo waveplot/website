@@ -66,7 +66,9 @@ function MainCtrl($scope, $location, $translate, $translatePartialLoader) {
 
     $scope.navigation = [
         {"id":0, "url":"/"},
-        {"id":1, "url":"/help"}
+        {"id":1, "url":"/help"},
+        {"id":2, "url":"/browse/artist"},
+        {"id":3, "url":"/browse/release"}
     ]
 
     $scope.getNavClass = function(id) {

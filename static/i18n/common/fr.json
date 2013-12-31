@@ -1,0 +1,11 @@
+{
+    "help":"Assistance",
+    "downloads":"Téléchargers",
+    "browse": {
+        "top":"Feuilleter",
+        "artists":"Artistes",
+        "albums":"Albums",
+        "songs":"Chansons",
+        "dynamic-range":"Gamme Dynamique"
+    }
+}

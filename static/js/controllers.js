@@ -12,11 +12,15 @@ function HomeCtrl($scope, $http, $translate, $translatePartialLoader) {
             $scope.items.push({"name":"Item" + i.toString()});
         }
     };
+   
+   $scope.tweets_loaded = false;
+   $scope.activity_loaded = false;
     
     $http.get(server+'/json/tweets').success(function (data) {
       $scope.tweets = data;
-      $scope.loaded = true;
+      $scope.tweets_loaded = true;
    });
+   
 }
 
 HomeCtrl.resolve = {

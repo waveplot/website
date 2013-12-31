@@ -1,0 +1,15 @@
+{
+    "jumbo_title": "Willkommen auf WavePlot!",
+    "jumbo_lead": "WavePlot ist ein Projekt entwickelt, um Informationen über die Audio-Dateien sammeln, und machen es für jedermann zugänglich. Unsere Daten frei ist, ist unser Quellcode offen, und wir möchten, dass Sie sich zu engagieren!",
+    "read_more": "Erzähl mir mehr!",
+    "download_title":"Download",
+    "download_text":"Laden Sie die neueste Version der Client-Bibliotheken WavePlot und dem WavePlot Scanner App.",
+    "api_title":"API",
+    "api_text":"Erfahren Sie mehr über unsere moderne REST-basierte Daten-Service, und wie man es verwenden, um eigene Apps zu bauen.",
+    "sign_up_title":"Registrieren",
+    "sign_up_text":"Melden Sie sich zu der WavePlot web-app, um Ihre eigenen Daten zu unserem Projekt beitragen!",
+    "news_title":"Aktuelle News",
+    "news_link":"mehr...",
+    "activity_title":"Letzte Aktivitäten"
+}
+

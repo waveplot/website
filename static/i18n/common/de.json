@@ -1,0 +1,12 @@
+{
+    "help":"Hilfe",
+    "downloads":"Downloads",
+    "browse": {
+        "top":"Blättern",
+        "artists":"Künstler",
+        "albums":"Alben",
+        "songs":"Songs",
+        "dynamic-range":"Dynamic Range"
+    }
+}
+
