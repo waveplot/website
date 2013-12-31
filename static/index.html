@@ -16,15 +16,15 @@
             ga('send', 'pageview');
         </script>
         <!-- BootStrap 3 -->
-        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
         <!-- Font Awesome -->
-        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.3/css/font-awesome.min.css">
         <!-- Custom Stylesheet -->
         <link rel="stylesheet" href="/css/custom.css">
         <!-- JQuery 2.0 -->
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
         <!-- BootStrap 3 JS -->
-        <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
 
         <!-- Angular -->
         <script src="/js/bower_components/angular/angular.min.js"></script>
@@ -33,7 +33,7 @@
         <!-- Angular Translate partialLoader -->
         <script src="/js/bower_components/angular-translate-loader-partial/angular-translate-loader-partial.min.js"></script>
         <!-- Angular UI Bootstrap 0.6 -->
-        <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.6.0/ui-bootstrap-tpls.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.7.0/ui-bootstrap-tpls.min.js"></script>
 
 
         <!-- ngInfiniteScroll -->
@@ -65,24 +65,24 @@
                         <li class="dropdown">
                             <a data-toggle="dropdown" href="#"><span translate>browse.top</span> <b class="caret"></b></a>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                                <li><a href="#"><span class="glyphicon glyphicon-user" style="margin-right:1em;"></span><span translate>browse.artists</span></a></li>
-                                <li><a href="#" data-ng-click="setRoute(3);"><span class="glyphicon glyphicon-th" style="margin-right:1em;"></span><span translate>browse.albums</span></a></li>
-                                <li><a href="#"><span class="glyphicon glyphicon-list" style="margin-right:1em;"></span><span translate>browse.songs</span></a></li>
-                                <li><a href="#"><span class="glyphicon glyphicon-volume-up" style="margin-right:1em;"></span><span translate>browse.dynamic-range</span></a></li>
+                                <li><a href="#"><span class="fa fa-users" style="margin-right:1em;"></span><span translate>browse.artists</span></a></li>
+                                <li><a href="#" data-ng-click="setRoute(3);"><span class="fa fa-th" style="margin-right:1em;"></span><span translate>browse.albums</span></a></li>
+                                <li><a href="#"><span class="fa fa-list" style="margin-right:1em;"></span><span translate>browse.songs</span></a></li>
+                                <li><a href="#"><span class="fa fa-volume-up" style="margin-right:1em;"></span><span translate>browse.dynamic-range</span></a></li>
                             </ul>
                         </li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="#"><span class="glyphicon glyphicon-stats"></span></a></li>
+                        <li><a href="#"><span class="fa fa-bar-chart-o"></span></a></li>
                         <li class="dropdown">
-                            <a data-toggle="dropdown" href="#"><span class="glyphicon glyphicon-globe"></span></a>
+                            <a data-toggle="dropdown" href="#"><span class="fa fa-globe"></span></a>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                                <li><a href="#" ng-click="changeLanguage('en');">English <span class="glyphicon glyphicon-ok-sign" style="color:green"></span></a></li>
-                                <li><a href="#" ng-click="changeLanguage('fr');">Français <span class="glyphicon glyphicon-exclamation-sign"></span></a></li>
-                                <li><a href="#" ng-click="changeLanguage('de');">Deutsch <span class="glyphicon glyphicon-exclamation-sign"></span></a></li>
-                                <li><a href="#" ng-click="changeLanguage('es');">Español <span class="glyphicon glyphicon-exclamation-sign"></span></a></li>
-                                <li><a href="#" ng-click="changeLanguage('cn');">普通话 <span class="glyphicon glyphicon-exclamation-sign"></span></a></li>
-                                <li><a href="#" ng-click="changeLanguage('jp');">日本語 <span class="glyphicon glyphicon-exclamation-sign"></span></a></li>
+                                <li><a href="#" ng-click="changeLanguage('en');">English <span class="fa fa-star pull-right"></span></a></li>
+                                <li><a href="#" ng-click="changeLanguage('fr');">Français <span class="fa fa-star-o pull-right"></span></a></li>
+                                <li><a href="#" ng-click="changeLanguage('de');">Deutsch <span class="fa fa-star-o pull-right"></span></a></li>
+                                <li><a href="#" ng-click="changeLanguage('es');">Español <span class="fa fa-star-o pull-right"></span></a></li>
+                                <li><a href="#" ng-click="changeLanguage('cn');">普通话 <span class="fa fa-star-o pull-right"></span></a></li>
+                                <li><a href="#" ng-click="changeLanguage('jp');">日本語 <span class="fa fa-star-o pull-right"></span></a></li>
                             </ul>
                         </li>
                     </ul>
@@ -90,7 +90,7 @@
                         <div class="form-group">
                             <input type="text" placeholder="Search" class="form-control">
                         </div>
-                        <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-search"></span></button>
+                        <button type="submit" class="btn btn-success"><span class="fa fa-search"></span></button>
                     </form>
                 </div>
                 <!--/.nav-collapse -->
@@ -104,8 +104,8 @@
             <div class="container">
 
                 <div class="row" style="text-align:justify;" >
-                        <div class="alert">
-                            <center><strong><a href="http://simple.wikipedia.org/wiki/JavaScript">JavaScript</a> disabled!</strong> Please use a JavaScript-enabled browser to view this site.</center>
+                        <div class="alert alert-info">
+                            <center><strong><a href="http://simple.wikipedia.org/wiki/JavaScript">JavaScript</a> disabled!</strong> Please use a JavaScript-enabled browser to view this site, or use our JavaScript-free <a href="http://waveplot.net:19048">web service</a>.</center>
                         </div>
                 </div>
 
