@@ -38,26 +38,50 @@ angular.module('waveplot', ['ui.bootstrap', 'pascalprecht.translate', 'infinite-
 
             $translateProvider.preferredLanguage('en');
         }
-    ]).directive('draw', function() {
-        return {
-            restrict: 'A',
-            link:function(scope, element, attrs) {
-                scope.$watch('element', function(val) {
-                    drawWavePlot(element.get()[0],val.data);
-                }, true);
-            }
+    ]
+).directive('draw', function() {
+    return {
+        restrict: 'A',
+        link:function(scope, element, attrs) {
+            scope.$watch('element', function(val) {
+                drawWavePlot(element.get()[0],val.data);
+            }, true);
         }
-    }
-).directive('fallbackSrc', function () {
-    //http://stackoverflow.com/questions/16349578/angular-directive-for-a-fallback-image
-    var fallbackSrc = {
-        link: function postLink(scope, iElement, iAttrs) {
-            iElement.bind('error', function() {
-                angular.element(this).attr("src", iAttrs.fallbackSrc);
+    };
+}).directive('fallbackSrc', function () {
+//http://stackoverflow.com/questions/16349578/angular-directive-for-a-fallback-image
+    return {
+        link: function postLink(scope, iElement, iAttrs) {            
+            iElement.bind("load", function() {
+                img = new Image();
+                
+                img.src = iAttrs.fallbackSrc;
+                
+                img.onload = function() {
+                    iElement.attr('src', this.src);
+                };
             });
         }
-    }
-    return fallbackSrc;;
+    };
+}).directive('releaseRow', function () {
+//http://stackoverflow.com/questions/16349578/angular-directive-for-a-fallback-image
+    return {
+        link: function highlight(scope, element, attrs) {
+            element.on('mouseenter', function(){
+                element.css('background-color','#e0e0e0');
+            });
+            
+            element.on('mouseleave', function(){
+                element.css('background-color','transparent');
+            });
+            
+            element.on('click', function(){
+                $('html, body').animate({
+                    scrollTop: element.offset().top - 50
+                }, 1000);
+            });
+        }
+    };
 });
 
 function MainCtrl($scope, $location, $translate, $translatePartialLoader) {
