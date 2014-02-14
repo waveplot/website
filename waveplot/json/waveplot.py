@@ -32,7 +32,7 @@ import waveplot.utils
 import waveplot.image
 
 from waveplot import app, VERSION
-from waveplot.schema import Session, WavePlot, Track, Recording, Editor, Editor_WavePlot, WavePlotContext, Release, uuid_h2b, uuid_b2h
+from waveplot.schema import Session, WavePlot, Track, Recording, Editor, WavePlotContext, Release, uuid_h2b, uuid_b2h
 
 @app.route('/json/waveplot/<value>', methods = ['GET', 'PUT', 'DELETE'])
 @waveplot.utils.crossdomain(origin = '*')
@@ -170,8 +170,6 @@ def waveplot_post():
 
     wp.uuid_bin = generated_uuid.bytes
 
-    wp.editor_id = editor.id
-
     wp.length = datetime.timedelta(seconds=int(f['length']))
     wp.trimmed_length = datetime.timedelta(seconds=int(f['length_trimmed']))
 
@@ -203,6 +201,9 @@ def waveplot_post():
     session.add(wp)
     session.commit()
     session.add(wpc)
+
+    e = Edit(editor_id = editor.id, waveplot_uuid_bin = wp.uuid_bin, edit_time = datetime.datetime.utcnow(), edit_type = 0)
+    session.add(e)
 
     result_uuid = wp.uuid
 

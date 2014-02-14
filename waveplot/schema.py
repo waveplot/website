@@ -46,15 +46,18 @@ def mbid_get(self):
 def mbid_set(self, value):
     self.mbid_bin = uuid_h2b(value)
 
-class Editor_WavePlot(Base):
-    __tablename__ = 'editor_waveplot'
+class Edit(Base):
+    __tablename__ = 'edits'
 
-    editor_id = Column(Integer, ForeignKey('editors.id'), primary_key=True)
-    waveplot_uuid_bin = Column(BINARY(length=16), ForeignKey('waveplots.uuid_bin'), primary_key=True)
+    id = Column(Integer, primary_key=True)
 
-    submit_date = Column(DateTime)
+    editor_id = Column(Integer, ForeignKey('editors.id'))
+    waveplot_uuid_bin = Column(BINARY(length=16), ForeignKey('waveplots.uuid_bin'))
+    
+    edit_time = Column(DateTime)
+    edit_type = Column(SmallInteger)
 
-    waveplot = relationship("WavePlot", backref="editor_assocs")
+    waveplot = relationship("WavePlot", backref="edits")
 
 class Editor(Base):
     __tablename__ = 'editors'
@@ -67,7 +70,7 @@ class Editor(Base):
     key = Column(BigInteger)
     activated = Column(Boolean)
 
-    waveplot_assocs = relationship("Editor_WavePlot", backref='editor')
+    edits = relationship("Edit", backref='editor')
 
     def __init__(self, name, email, key, activated = False):
         self.name = name
