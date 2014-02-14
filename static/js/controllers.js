@@ -262,6 +262,7 @@ function ActivateCtrl($scope,$routeParams,$http){
 function BrowseReleases($scope, $http){
     delete $http.defaults.headers.common['X-Requested-With'];
 
+    $scope.selected = [];
     $scope.releases = [];
     var num_releases = 0;
 
@@ -273,4 +274,30 @@ function BrowseReleases($scope, $http){
         });
         num_releases += 24;
     };
+}
+
+function HelpCtrl(){
+}
+
+HelpCtrl.resolve = {
+    lang: function($translate, $translatePartialLoader, $q){
+        $translatePartialLoader.addPart('help');
+        return $translate.refresh();
+    }
+}
+
+function DownloadsCtrl($scope){
+	$scope.selected = [];
+	
+	$scope.downloads = [
+		{"name":"Blah","windows":true, "linux":false},
+		{"name":"Blah","windows":true, "linux":true}
+	];
+}
+
+DownloadsCtrl.resolve = {
+    lang: function($translate, $translatePartialLoader, $q){
+        $translatePartialLoader.addPart('downloads');
+        return $translate.refresh();
+    }
 }

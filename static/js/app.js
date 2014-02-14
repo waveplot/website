@@ -9,7 +9,8 @@ angular.module('waveplot', ['ui.bootstrap', 'pascalprecht.translate', 'infinite-
                 when('/list/recording', {templateUrl: '/partials/recording_list.html', controller: RecordingListCtrl});
 
             $routeProvider.
-                when('/help', {templateUrl: '/partials/help.html'}).
+                when('/help', {templateUrl: '/partials/help.html', controller: HelpCtrl, resolve: HelpCtrl.resolve}).
+                when('/downloads', {templateUrl: '/partials/downloads.html', controller: DownloadsCtrl, resolve: DownloadsCtrl.resolve}).
                 when('/get-started', {templateUrl: '/partials/get_started.html'}).
                 when('/extreme-dr', {templateUrl: '/partials/extreme_dr.html', controller: ExtremeDRCtrl}).
                 when('/register', {templateUrl: '/partials/register.html', controller: RegisterCtrl}).
@@ -63,18 +64,40 @@ angular.module('waveplot', ['ui.bootstrap', 'pascalprecht.translate', 'infinite-
             });
         }
     };
-}).directive('releaseRow', function () {
-//http://stackoverflow.com/questions/16349578/angular-directive-for-a-fallback-image
+}).directive('highlightHover', function () {
     return {
         link: function highlight(scope, element, attrs) {
             element.on('mouseenter', function(){
-                element.css('background-color','#e0e0e0');
+				if(scope.selected[element.attr('id')] != true){
+					element.css('background-color','#e0e0e0');
+				}
             });
             
             element.on('mouseleave', function(){
-                element.css('background-color','transparent');
+				if(scope.selected[element.attr('id')] != true){
+					element.css('background-color','transparent');
+				}
             });
-            
+        }
+    };
+}).directive('highlightSelect', function () {
+    return {
+        link: function highlight(scope, element, attrs) {
+			scope.selected[element.attr('id')] = (attrs['selected'] !== undefined);
+			
+			if(scope.selected[element.attr('id')]){
+				element.css('background-color','#d0d0d0');
+			}
+			
+            element.on('click', function(){
+				scope.selected[element.attr('id')] = !scope.selected[element.attr('id')];
+				element.css('background-color','#d0d0d0');
+            });
+        }
+    };
+}).directive('clickScroll', function () {
+    return {
+        link: function highlight(scope, element, attrs) {
             element.on('click', function(){
                 $('html, body').animate({
                     scrollTop: element.offset().top - 50
@@ -92,7 +115,8 @@ function MainCtrl($scope, $location, $translate, $translatePartialLoader) {
         {"id":0, "url":"/"},
         {"id":1, "url":"/help"},
         {"id":2, "url":"/browse/artist"},
-        {"id":3, "url":"/browse/release"}
+        {"id":3, "url":"/browse/release"},
+        {"id":4, "url":"/downloads"}
     ]
 
     $scope.getNavClass = function(id) {
