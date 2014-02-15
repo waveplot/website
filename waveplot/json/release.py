@@ -43,6 +43,7 @@ def release():
         {
             'id':r.mbid,
             'title':r.title,
+            'artist_credit':r.artist_credit.name,
             'url':None
         } for r in releases.all()
     ]
