@@ -1,0 +1,75 @@
+<div class="jumbotron">
+  <div class="container">
+    <h1 translate>jumbo_title</h1>
+    <p translate>jumbo_lead</p>
+    <p><a class="btn btn-primary btn-lg" translate>read_more</a></p>
+  </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4 col-md-push-4">
+            <!-- List group -->
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <a href=""><h4 class="list-group-item-heading">
+                        <span class="fa fa-download" style="margin-right:1em;"></span>
+                        <span translate>download_title</span>
+                    </h4></a>
+                    <p class="list-group-item-text" translate>
+                        download_text
+                    </p>
+                </li>
+                <li class="list-group-item">
+                    <a href=""><h4 class="list-group-item-heading">
+                        <span class="fa fa-exchange" style="margin-right:1em;"></span>
+                        <span translate>api_title</span>
+                    </h4></a>
+                    <p class="list-group-item-text" translate>
+                        api_text
+                    </p>
+                </li>
+                <li class="list-group-item">
+                    <a href=""><h4 class="list-group-item-heading">
+                        <span class="fa fa-user" style="margin-right:1em;"></span>
+                        <span translate>sign_up_title</span>
+                    </h4></a>
+                    <p class="list-group-item-text" translate>
+                        sign_up_text
+                    </p>
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-4 col-md-pull-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><span translate>news_title</span> <a href="https://twitter.com/WavePlot" class="pull-right">
+                    <span class="fa fa-twitter"></span> <span translate>news_link</span></a></h3>
+                </div>
+
+                <!-- List group -->
+                <ul class="list-group">
+                    <li data-ng-show="tweets_loaded" class="list-group-item" data-ng-repeat="tweet in tweets" data-ng-bind-html="'<small>'+tweet+'</small>'"></li>
+                    <li class="list-group-item text-center" data-ng-hide="tweets_loaded">
+                        <span class="fa fa-spinner fa-spin"></span>
+                    </li>
+                </ul>
+            </div>      
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><span translate>activity_title</span> <a href=""><span class="pull-right glyphicon glyphicon-refresh"></span></a></h3>
+                </div>
+
+                <!-- List group -->
+                <ul class="list-group">                   
+                    <li class="list-group-item text-center" data-ng-hide="activity_loaded">
+                        <span class="fa fa-spinner fa-spin"></span>
+                    </li>
+                    <li data-ng-show="activity_loaded" class="list-group-item" data-ng-repeat="tweet in tweets" data-ng-bind-html-unsafe="'<small>'+tweet+'</small>'"></li>
+                </ul>
+            </div>      
+        </div>
+    </div>
+</div>
