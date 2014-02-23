@@ -37,16 +37,19 @@
         <!-- Angular UI Bootstrap 0.6 -->
         <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.7.0/ui-bootstrap-tpls.min.js"></script>
 
-        
+
         <!-- App -->
         <!-- Controllers -->
         <script src="/assets/js/controllers.js"></script>
-        <script src="/app/downloads/downloads.js"></script>
+
+        <script src="/app/downloads/all.js"></script>
+        <script src="/app/downloads/latest.js"></script>
+
         <script src="/app/layout/layout.js"></script>
         <script src="/directives.js"></script>
         <script src="/filters.js"></script>
         <script src="/app.js"></script>
-        
+
         <base href="/" />
         <meta name="fragment" content="!" />
     </head>
@@ -70,7 +73,7 @@
                 <div class="collapse navbar-collapse">
                     <ul class="nav navbar-nav">
                         <li data-ng-class="getNavClass(1);"><a href="/help" translate>help</a></li>
-                        <li><a href="/downloads" translate>downloads</a></li>
+                        <li><a href="/latest-downloads" translate>downloads</a></li>
                         <li class="dropdown">
                             <a data-toggle="dropdown" href="#"><span translate>browse.top</span> <b class="caret"></b></a>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">

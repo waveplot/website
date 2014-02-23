@@ -286,18 +286,3 @@ HelpCtrl.resolve = {
     }
 }
 
-function DownloadsCtrl($scope){
-	$scope.selected = [];
-	
-	$scope.downloads = [
-		{"name":"Blah","windows":true, "linux":false},
-		{"name":"Blah","windows":true, "linux":true}
-	];
-}
-
-DownloadsCtrl.resolve = {
-    lang: function($translate, $translatePartialLoader, $q){
-        $translatePartialLoader.addPart('downloads');
-        return $translate.refresh();
-    }
-}
