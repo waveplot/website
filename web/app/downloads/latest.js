@@ -11,6 +11,11 @@ function LatestDownloadsController($scope){
         var item = (!$scope.scanner && !$scope.binaries && !$scope.source);
         return platform || item;
     };
+    
+    $scope.download = function() {
+        // TODO - Need to set the file correctly based on user selection
+        window.location = '/assets/downloads/libwaveplot.tar.gz';
+    }
 }
 
 
