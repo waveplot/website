@@ -276,7 +276,22 @@ function BrowseReleases($scope, $http){
     };
 }
 
-function HelpCtrl(){
+function HelpCtrl($scope, $modal){
+    //Placeholder question until the server supports this.
+    $scope.openQuestion = function() {
+        $modal.open({
+            templateUrl: '/app/help/question-modal.html',
+            controller: QuestionModalController,
+            resolve: {
+                question: function () {
+                    return "What is WavePlot?";
+                },
+                answer: function () {
+                    return "<p>WavePlot is one of two things, depending on the context - either a database of acoustic information, and a type of image which displays a waveform. The waveform image came first, and it was only after the original WavePlots were generated that it was decided that there should be a place to store them.</p><p>Besides WavePlots, the WavePlot database also includes dynamic range information for each track, and other information such as number of channels, track length and source file type.</p>";
+                }
+            }
+        });
+    };
 }
 
 HelpCtrl.resolve = {

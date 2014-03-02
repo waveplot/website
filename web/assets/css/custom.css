@@ -1,2 +1,4 @@
-html { overflow-y: scroll; }
 body { padding-top: 50px; }
+
+.hightlight-hover { background-color: #0000ff !important; }
+.hightlight-select { background-color: #ff0000 !important; }
