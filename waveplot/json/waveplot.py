@@ -32,15 +32,17 @@ import waveplot.utils
 import waveplot.image
 
 from waveplot import app, VERSION
-from waveplot.schema import Session, WavePlot, Track, Recording, Editor, WavePlotContext, Release, uuid_h2b, uuid_b2h
+from waveplot.schema import Session, WavePlot, Track, Recording, Editor, Edit, WavePlotContext, Release, uuid_h2b, uuid_b2h
 
 @app.route('/json/waveplot/<value>', methods = ['GET', 'PUT', 'DELETE'])
 @waveplot.utils.crossdomain(origin = '*')
 def waveplot_all(value):
     if value.startswith('list'):
         return waveplot_list()
-    else:
-        return waveplot_uuid(value)
+    elif request.method == 'GET':
+        return waveplot_get_uuid(value)
+    elif request.method == 'PUT':
+        return waveplot_put_uuid(value)
 
 def waveplot_list():
     page = int(request.args.get('page', "1"))
@@ -76,7 +78,7 @@ def waveplot_list():
 
     return make_response(json.dumps(results))
 
-def waveplot_uuid(value):
+def waveplot_get_uuid(value):
 
     session = Session()
 
@@ -144,8 +146,17 @@ def waveplot_post():
 
     f = request.form.to_dict()
 
-    required_data = {'recording', 'release', 'track', 'disc', 'image', 'source_type', 'sample_rate', 'bit_depth', 'bit_rate',
-        'num_channels', 'length', 'length_trimmed', 'editor', 'dr_level'}
+    required_data = {
+        'image',
+        'source_type',
+        'sample_rate',
+        'bit_depth',
+        'bit_rate',
+        'num_channels',
+        'length',
+        'editor',
+        'dr_level'
+    }
 
     l = [a for a in required_data if a not in f]
     if l:
@@ -171,14 +182,13 @@ def waveplot_post():
     wp.uuid_bin = generated_uuid.bytes
 
     wp.length = datetime.timedelta(seconds=int(f['length']))
-    wp.trimmed_length = datetime.timedelta(seconds=int(f['length_trimmed']))
+    #Calculate this - wp.trimmed_length = datetime.timedelta(seconds=int(f['length_trimmed']))
 
     image.generate_image_data()
 
     # Image Data in DB
     wp.thumbnail_bin = image.thumb_data
     wp.sonic_hash = image.sonic_hash
-    print(wp.sonic_hash)
 
     # Sonic properties
     wp.num_channels = int(f['num_channels'])
@@ -189,19 +199,11 @@ def waveplot_post():
     wp.bit_depth = f['bit_depth']
     wp.bit_rate = f['bit_rate']
 
-    wpc = WavePlotContext(wp.uuid)
-
-    wpc.release_mbid_bin = uuid_h2b(f['release'])
-    wpc.recording_mbid_bin = uuid_h2b(f['recording'])
-    wpc.track_number = f['track']
-    wpc.disc_number = f['disc']
-
     image.save(generated_uuid.hex)
 
     session.add(wp)
     session.commit()
-    session.add(wpc)
-
+    
     e = Edit(editor_id = editor.id, waveplot_uuid_bin = wp.uuid_bin, edit_time = datetime.datetime.utcnow(), edit_type = 0)
     session.add(e)
 
@@ -211,3 +213,29 @@ def waveplot_post():
     session.close()
 
     return make_response(json.dumps({u'result':u'success', u'uuid':result_uuid}))
+
+def waveplot_put_uuid(value):
+    required_data = {'recording', 'release', 'track', 'disc', 'editor'}
+
+    l = [a for a in required_data if a not in f]
+    if l:
+        return make_response(json.dumps({u'result':u'failure', u'error':u"Required data not provided. ({})".format(",".join(l))}))
+
+    editor = session.query(Editor).filter_by(key=f['editor']).first()
+    if editor is None:
+        return make_response(json.dumps({u'result':u'failure', u'error':u"Bad editor key ({})".format(f['editor'])}))
+
+    wpc = WavePlotContext(uuid_h2b(value))
+
+    wpc.release_mbid_bin = uuid_h2b(f['release'])
+    wpc.recording_mbid_bin = uuid_h2b(f['recording'])
+    wpc.track_number = f['track']
+    wpc.disc_number = f['disc']
+    session.add(wpc)
+    session.commit()
+    
+    e = Edit(editor_id = editor.id, waveplot_uuid_bin = wp.uuid_bin, edit_time = datetime.datetime.utcnow(), edit_type = 1)
+    session.add(e)
+    session.commit()
+
+    return make_response(json.dumps({u'result':u'success', u'uuid':value}))
