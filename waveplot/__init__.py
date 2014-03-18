@@ -40,3 +40,4 @@ import waveplot.json.editor
 import waveplot.json.recording
 import waveplot.json.release
 import waveplot.json.waveplot
+import waveplot.json.question

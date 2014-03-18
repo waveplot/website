@@ -286,6 +286,22 @@ class WavePlotContext(Base):
     def uuid(self, value):
         self.uuid_bin = uuid.UUID(hex=value).bytes
 
+# Class to model the questions/answers on the help page - not part of core data
+class Question(Base):
+    __tablename__ = 'questions'
+    
+    id = Column(Integer, primary_key=True)
+    
+    question = Column(UnicodeText(collation='utf8_bin'))
+    answer = Column(UnicodeText(collation='utf8_bin'), nullable = True)
+    
+    answered = Column(DateTime, nullable = True)
+    
+    category = Column(SmallInteger)
+    
+    # Number of visits since "answered" date
+    visits = Column(Integer)
+
 
 def setup():
     engine = create_engine('mysql://{}:{}@{}/waveplot_alchemy'.format(passwords['mysql']['username'],passwords['mysql']['password'],passwords['mysql']['host']), pool_recycle = 14400)

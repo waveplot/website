@@ -4,35 +4,25 @@
         <div class="col-md-4">
             <h3>About WavePlot</h3>
             <ul class="list-unstyled">
-                <li><a ng-click="openQuestion()">What is WavePlot?</a></li>
-                <li><a href="#">Who develops WavePlot?</a></li>
-                <li><a href="#">How long has WavePlot been in development?</a></li>
-                <li><a href="#">What is the aim of WavePlot?</a></li>
-                <li><a href="#">How can I contribute?</a></li>
-                <li><a href="#">How do you calculate DR ratings?</a></li>
-                <li><a href="#">Is it legal?</a></li>
-                <li><a href="#">What is MusicBrainz?</a></li>
-                <li><a href="#">What is Picard?</a></li>
+                <li ng-repeat="q in questions | filter:{category:0}">
+                    <button type="button" class="btn btn-link" ng-click="openQuestion(q.id)">{{ q.question }}</button>
+                </li>
             </ul>
         </div>
         <div class="col-md-4">
             <h3>Using WavePlot</h3>
             <ul class="list-unstyled">
-                <li><a href="#">Can I download songs?<span class="badge badge-primary pull-right">1</span></a></li>
-                <li><a href="#">Why is my favourite artist not here?</a></li>
-                <li><a href="#">What should I do if information is wrong?</a></li>
-                <li><a href="#">Why do you need my email address?</a></li>
-                <li><a href="#">How can I use WavePlots?</a></li>
-                <li><a href="#">Is the WavePlot data freely available?</a></li>
+                <li ng-repeat="q in questions | filter:{category:1}">
+                    <button type="button" class="btn btn-link" ng-click="openQuestion(q.id)">{{ q.question }}</button>
+                </li>
             </ul>
         </div>
         <div class="col-md-4">
             <h3>Developing with WavePlot</h3>
             <ul class="list-unstyled">
-                <li><a href="#">How can I use WavePlot in my application?</a></li>
-                <li><a href="#">Is there a Web Service?</a></li>
-                <li><a href="#">How can I help develop WavePlot?</a></li>
-                <li><a href="#">What server software does this site use?</a></li>
+                <li ng-repeat="q in questions | filter:{category:2}">
+                    <button type="button" class="btn btn-link" ng-click="openQuestion(q.id)">{{ q.question }}</button>
+                </li>
             </ul>
         </div>
     </div>

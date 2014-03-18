@@ -1,7 +1,10 @@
 
-function QuestionModalController($scope, $modalInstance, question, answer){
-    $scope.question = question;
-    $scope.answer = answer;
+function QuestionModalController($scope, $modalInstance, question){
+    $scope.question = question.question;
+    $scope.answer = question.answer;
+    
+    var d = new Date(question.answered);
+    $scope.footer_string = d.toISOString().substr(0,10);
     
     $scope.ok = function () {
         $modalInstance.close();
