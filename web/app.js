@@ -1,6 +1,14 @@
 // Create main module
 var waveplot = angular.module("waveplot", ['waveplot.directives', 'waveplot.filters', 'ngRoute', 'ngSanitize', 'ui.bootstrap', 'pascalprecht.translate', 'infinite-scroll']);
 
+// List of pages with unique identifying string ids.
+var pages = {
+    'help': ['/help', '/help', {templateUrl: '/app/help/help.html', controller: HelpCtrl, resolve: HelpCtrl.resolve}],
+    'latest-downloads': ['/latest-downloads', '/latest-downloads', {templateUrl: '/app/downloads/latest.html', controller: LatestDownloadsController, resolve: LatestDownloadsController.resolve}],
+    'all-downloads': ['/all-downloads', '/all-downloads', {templateUrl: '/app/downloads/all.html', controller: AllDownloadsController, resolve: AllDownloadsController.resolve}],
+    'waveplot-view': ['/waveplot/:uuid', '/waveplot/:uuid', {templateUrl: '/app/view/waveplot.html', controller: WavePlotViewController, resolve: WavePlotViewController.resolve}],
+};
+
 // Configure the main module
 waveplot.config(function ($routeProvider, $locationProvider, $translateProvider, $translatePartialLoaderProvider) {
     // Set up pages in application

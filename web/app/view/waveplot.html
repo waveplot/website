@@ -1,0 +1,38 @@
+<div class="container">
+    <div class="row">
+        <h3>Title by AlbumArtist</h3>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <!-- For some reason this requires css to reserve vertical space? -->
+            <img src="http://coverartarchive.org/release/{{data.release.mbid}}/front-250" alt="" onerror="replace_bad_ca(this)" style="height:140px" width="140" height="140"></img>
+            <div style="text-align:center; font-size: 0.8em;">
+                ReleaseTitle<br/>
+                Disc DiscNumber<br/>
+                Track TrackNumber
+            </div>
+        </div>
+        <div>
+            <canvas width="400" height="151" draw></canvas>
+        </div>
+    </div>
+    <hr/>
+    <div class="row">
+        <div class="col-md-12">
+            <table>
+                <tr><td>Length</td><td style="padding-left:.5em;">Length</td></tr>
+                <tr><td>Trimmed Length</td><td style="padding-left:.5em;">Trimmed Length</td></tr>
+                <tr><td>DR Level</td><td style="padding-left:.5em;">DR Level</td></tr>
+                <tr><td>Source</td><td style="padding-left:.5em;">Source Type</td></tr>
+                <tr><td>Bit Rate</td><td style="padding-left:.5em;">Bit Rate</td></tr>
+                <tr><td>Bit Depth</td><td style="padding-left:.5em;">Bit Depth</td></tr>
+                <tr><td>Sample Rate</td><td style="padding-left:.5em;">Sample Rate</td></tr>
+                <tr><td>Audio Channels</td><td style="padding-left:.5em;">Num Channels</td></tr>
+                <tr><td>Sonic Hash</td><td style="padding-left:.5em;">Sonic Hash</td></tr>
+                <tr><td>Track MBID</td><td style="padding-left:.5em;"><a href="http://musicbrainz.org/recording/{{data.recording.mbid}}">Track MBID</a></td></tr>
+                <tr><td>Recording MBID</td><td style="padding-left:.5em;"><a href="http://musicbrainz.org/recording/{{data.recording.mbid}}">Recording MBID</a></td></tr>
+                <tr><td>Release MBID</td><td style="padding-left:.5em;"><a href="http://musicbrainz.org/recording/{{data.recording.mbid}}">Release MBID</a></td></tr>
+            </table>
+        </div>
+    </div>
+</div>
