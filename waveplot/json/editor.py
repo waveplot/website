@@ -31,7 +31,7 @@ from waveplot import app
 from waveplot.schema import Session, Editor
 
 @app.route('/json/editor', methods = ['POST', 'OPTIONS'])
-@waveplot.utils.crossdomain(origin = '*')
+@waveplot.utils.crossdomain(origin = '*', headers='Content-Type')
 def editor_all():
     if request.method == b'POST':
         return editor_create()
@@ -98,8 +98,6 @@ def editor_create():
     # Send an activation email
     activation_url = "http://waveplot.ockmore.net/#/activate/"+str(generated_key)
     waveplot.utils.SendEmail(email,"WavePlot Activation Required!", activation_string.format(username,activation_url,activation_url))
-
-    response = make_response(json.dumps({u'result':u'success'}))
 
     session.commit()
     session.close()

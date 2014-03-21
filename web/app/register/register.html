@@ -1,0 +1,52 @@
+<div class="container">
+    
+    <div ng-if="mode == 0">
+        <p class="lead" style="margin-top:30px" translate>register_lead</p>
+        
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="form-group">
+                    <input type="text" class="form-control input-lg" placeholder="Username" ng-model="input.username">
+                </div>
+                
+                <div class="form-group">
+                    <input type="email" class="form-control input-lg" placeholder="Email Address" ng-model="input.email">
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 col-md-offset-4">
+                <button type="button" class="btn btn-primary btn-lg btn-block" ng-click="submit()">Register</button>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div ng-if="mode == 1">
+        <p class="lead" style="margin-top:30px" translate>activate_lead</p>
+        
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="form-group">
+                    <input type="text" class="form-control input-lg" placeholder="Editor PIN" ng-model="input.pin">
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 col-md-offset-4">
+                <button type="button" class="btn btn-success btn-lg btn-block" ng-click="activate()">Activate!</button>
+            </div>
+        </div>
+    </div>
+    
+    <div ng-if="mode == 2">
+        <p class="lead" style="margin-top:30px" translate>complete_lead</p>
+    </div>
+    
+    <div class="row" ng-if="error">
+        {{ error }}
+    </div>
+</div>
+
