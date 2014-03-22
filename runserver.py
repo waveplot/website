@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-# Copyright 2013 Ben Ockmore
+# Copyright 2014 Ben Ockmore
 
 # This file is part of WavePlot Server.
 
@@ -17,10 +17,11 @@
 # You should have received a copy of the GNU General Public License
 # along with WavePlot Server. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, absolute_import, division
+from waveplot import app
 
-# We're still in development phase.
-DEBUG = True
+config = {
+    "debug":True,
+    "port":19048
+}
 
-# Default port
-PORT = 19048
+app.run(**config)

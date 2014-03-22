@@ -17,27 +17,29 @@
 # You should have received a copy of the GNU General Public License
 # along with WavePlot Server. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, absolute_import, division
-
-import os
-
 from flask import Flask
+from flask.ext.restless import APIManager
+from flask.ext.sqlalchemy import SQLAlchemy
 
-import waveplot.schema
+from waveplot.passwords import passwords
+#from waveplot.schema import Editor
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://{}:{}@{}/waveplot_test'.format(passwords['mysql']['username'],passwords['mysql']['password'],passwords['mysql']['host'])
+db = SQLAlchemy(app)
+
+from waveplot.schema import Question, Editor
+
+manager = APIManager(app, flask_sqlalchemy_db=db)
+
+manager.create_api(Question, methods=['GET', 'POST', 'DELETE'])
+manager.create_api(Editor, methods=['GET'])
 
 VERSION = b'CITRUS'
 
-waveplot.schema.setup()
-
-app = Flask(__name__)
-app.config.from_object('waveplot.default_settings')
-if os.getenv('WAVEPLOT_SETTINGS') is not None:
-    app.config.from_envvar('WAVEPLOT_SETTINGS')
-
-
-import waveplot.json.homepage_data
-import waveplot.json.editor
-import waveplot.json.recording
-import waveplot.json.release
-import waveplot.json.waveplot
-import waveplot.json.question
+#import waveplot.json.homepage_data
+#import waveplot.json.editor
+#import waveplot.json.recording
+#import waveplot.json.release
+#import waveplot.json.waveplot
+#import waveplot.json.question
