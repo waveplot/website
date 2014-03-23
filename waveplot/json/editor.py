@@ -19,87 +19,71 @@
 
 from __future__ import print_function, absolute_import, division
 
-import json
 import random
 
-from flask import request, make_response
+from flask.ext.restless import ProcessingException
 
-import waveplot.schema
-import waveplot.utils
+from waveplot import manager, db
+from waveplot.schema import Editor
+from waveplot.utils import SendEmail
 
-from waveplot import app
-from waveplot.schema import Session, Editor
-
-@app.route('/json/editor', methods = ['POST', 'OPTIONS'])
-@waveplot.utils.crossdomain(origin = '*', headers='Content-Type')
-def editor_all():
-    if request.method == b'POST':
-        return editor_create()
-
-@app.route("/json/activate", methods = ['POST'])
-@waveplot.utils.crossdomain(origin = '*')
-def activate():
-    if 'key' not in request.form:
-        return make_response(json.dumps({u'result':u'failure', u'error':u"Missing data. Activation key required."}))
-
-    session = Session()
-
-    editor = session.query(Editor).filter_by(key=request.form['key']).first()
-
-    if editor is None:
-        return make_response(json.dumps({u'result':u'failure', u'error':u"No such key! Please register!"}))
-
-    if editor.activated:
-        return make_response(json.dumps({u'result':u'failure', u'error':u"You've already activated! Time to use the site!"}))
-
-    editor.activated = True
-
-    session.commit()
-    session.close()
-
-    return make_response(json.dumps({u'result':u'success'}))
-
-
-def editor_create():
-    activation_string = """
+ACTIVATION_EMAIL_BODY = """
 <p>Hi {}!</p>
 
 <p>Please activate your WavePlot account using the activation link below:</p>
 
 <p><a href="{}">{}</a></p>
 
-<p>Many thanks for your help in building the WavePlot database!</p>"""
+<p>Many thanks for your help in building the WavePlot database!</p>
+"""
 
 
-    username = request.form.get('username', '')
-    email = request.form.get('email', '')
+def pre_post(data=None, **kw):
+    email = data.get('email', '')
 
-    if not (username and email):
-        return make_response(json.dumps({u'result':u'failure', u'error':u"Missing data. Username and email required."}))
+    at_pos = email.rfind('@')
+    dot_pos = email.rfind('.')
 
-    atpos = email.rfind('@')
-    dotpos = email.rfind('.')
+    if ((at_pos < 1) or (dot_pos < (at_pos + 2)) or
+            ((dot_pos + 2) >= len(email))):
+        raise ProcessingException(message='Bad Email Address', status_code=400)
 
-    if (atpos < 1) or (dotpos < (atpos + 2)) or ((dotpos + 2) >= len(email)):
-        return make_response(json.dumps({u'result':u'failure', u'error':u"Email address invalid."}))
-
-    session = Session()
-
-    if session.query(Editor).filter_by(email=email).count():
-        return make_response(json.dumps({u'result':u'failure', u'error':u"Email address already registered. Please await your activation email."}))
+    if db.session.query(Editor).filter_by(email=email).first() is not None:
+        raise ProcessingException(message='Email Address Already Registered',
+                                  status_code=403)
 
     generated_key = random.randint(0, 999999999)
-    while session.query(Editor).filter_by(key=generated_key).count():
+    while db.session.query(Editor).filter_by(key=generated_key).count():
         generated_key = random.randint(0, 999999999)
 
-    new_editor = Editor(username, email, generated_key)
-    session.add(new_editor)
+    data['key'] = generated_key
 
+
+def post_post(result=None, **kw):
     # Send an activation email
-    activation_url = "http://waveplot.ockmore.net/#/activate/"+str(generated_key)
-    waveplot.utils.SendEmail(email,"WavePlot Activation Required!", activation_string.format(username,activation_url,activation_url))
+    activation_url = "http://localhost/activate/"+str(result['key'])
+    SendEmail(result['email'], "WavePlot Activation Required!",
+              ACTIVATION_EMAIL_BODY.format(result['name'], activation_url,
+                                           activation_url))
 
-    session.commit()
-    session.close()
 
-    return make_response(json.dumps({u'result':u'success'}))
+def pre_put(instance_id=None, data=None, **kw):
+    # The activation key must be present and correct to make any changes here.
+    instance = db.session.query(Editor).filter_by(id=instance_id).first()
+
+    if instance is None:
+        raise ProcessingException(message='Editor Does Not Exist',
+                                  status_code=404)
+
+    if data.get('key', None) != instance.key:
+        raise ProcessingException(message='Incorrect Editor PIN',
+                                  status_code=401)
+
+
+manager.create_api(Editor, methods=['GET', 'POST', 'PUT', 'DELETE'],
+                   preprocessors={
+                       'POST': [pre_post],
+                       'PUT_SINGLE': [pre_put]
+                   }, postprocessors={
+                       'POST': [post_post]
+                   })

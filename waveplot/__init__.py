@@ -33,10 +33,12 @@ from waveplot.schema import Question, Editor
 manager = APIManager(app, flask_sqlalchemy_db=db)
 
 manager.create_api(Question, methods=['GET', 'POST', 'DELETE'])
-manager.create_api(Editor, methods=['GET'])
+
 
 VERSION = b'CITRUS'
 
+
+import waveplot.json.editor
 #import waveplot.json.homepage_data
 #import waveplot.json.editor
 #import waveplot.json.recording
