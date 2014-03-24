@@ -19,59 +19,22 @@
 
 from __future__ import print_function, absolute_import, division
 
-import json
-
-from flask import request, make_response
-
 import waveplot.utils
 
-from waveplot import app
+from waveplot import manager, db
 
-from waveplot.schema import Session, Question
+from waveplot.schema import Question
 
-@app.route('/json/question', methods = ['GET'])
-@waveplot.utils.crossdomain(origin = '*')
-def question_all():
-    session = Session()
 
-    questions = session.query(Question)
+def post_get(result=None, **kw):
+    question = db.session.query(Question).filter_by(id=result['id']).first()
 
-    data = [
-        {
-            'id':q.id,
-            'question':q.question,
-            'visits':q.visits,
-            'category':q.category,
-            'answered':(q.answered.isoformat() if q.answered is not None else False),
-            'url':None
-        } for q in questions.all()
-    ]
+    question.visits += 1
 
-    session.close()
+    db.session.commit()
 
-    return make_response(json.dumps(data))
-    
-@app.route('/json/question/<id>', methods = ['GET'])
-@waveplot.utils.crossdomain(origin = '*')
-def question_get(id):
-    session = Session()
 
-    q = session.query(Question).filter_by(id=id).first()
-
-    data = {
-        'id':q.id,
-        'question':q.question,
-        'answer':q.answer,
-        'visits':q.visits,
-        'category':q.category,
-        'answered':(q.answered.isoformat() if q.answered is not None else False),
-        'url':None
-    }
-    
-    # Increment visit count
-    q.visits += 1
-    
-    session.commit()
-    session.close()
-
-    return make_response(json.dumps(data))
+manager.create_api(Question, methods=['GET', 'POST'],
+                   postprocessors={
+                       'GET_SINGLE': [post_get]
+                   })

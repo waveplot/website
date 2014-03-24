@@ -80,7 +80,7 @@ def pre_put(instance_id=None, data=None, **kw):
                                   status_code=401)
 
 
-manager.create_api(Editor, methods=['GET', 'POST', 'PUT', 'DELETE'],
+manager.create_api(Editor, methods=['GET', 'POST', 'PUT'],
                    preprocessors={
                        'POST': [pre_post],
                        'PUT_SINGLE': [pre_put]

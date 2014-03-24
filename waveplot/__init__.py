@@ -32,9 +32,6 @@ from waveplot.schema import Question, Editor
 
 manager = APIManager(app, flask_sqlalchemy_db=db)
 
-manager.create_api(Question, methods=['GET', 'POST', 'DELETE'])
-
-
 VERSION = b'CITRUS'
 
 
@@ -44,4 +41,4 @@ import waveplot.json.editor
 #import waveplot.json.recording
 #import waveplot.json.release
 #import waveplot.json.waveplot
-#import waveplot.json.question
+import waveplot.json.question
