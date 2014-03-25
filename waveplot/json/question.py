@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-# Copyright 2013 Ben Ockmore
+# Copyright 2013, 2014 Ben Ockmore
 
 # This file is part of WavePlot Server.
 
@@ -19,8 +19,6 @@
 
 from __future__ import print_function, absolute_import, division
 
-import waveplot.utils
-
 from waveplot import manager, db
 
 from waveplot.schema import Question
@@ -33,8 +31,16 @@ def post_get(result=None, **kw):
 
     db.session.commit()
 
+def pre_post(data=None, **kw):
+    # Get rid of any answer the user has tried to post, since only admin can answer questions
+    data['answer'] = None
+    data['answered'] = None
+
 
 manager.create_api(Question, methods=['GET', 'POST'],
+                   preprocessors={
+                       'POST': [pre_post]
+                   },
                    postprocessors={
                        'GET_SINGLE': [post_get]
                    })

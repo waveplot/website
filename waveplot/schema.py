@@ -201,14 +201,14 @@ class Release(db.Model):
 
     mbid = db.Column(db.Unicode(32, collation='utf8_bin'), primary_key=True)
 
-    title = db.Column(db.UnicodeText(collation='utf8_bin'))
-    last_cached = db.Column(db.DateTime)
+    title = db.Column(db.UnicodeText(collation='utf8_bin'), nullable=True, default=None)
+    last_cached = db.Column(db.DateTime, nullable=True, default=None)
 
     # Data derived from relationships
-    dr_level = db.Column(db.SmallInteger, nullable=True)
+    dr_level = db.Column(db.SmallInteger, nullable=True, default=None)
 
+    artist_credit_id = db.Column(db.Integer, db.ForeignKey('artist_credit.id'), nullable=True, default=None)
     tracks = db.relationship("Track", backref="release", passive_updates=False)
-    artist_credit_id = db.Column(db.Integer, db.ForeignKey('artist_credit.id'))
 
     def __init__(self, mbid):
         self.mbid = mbid
@@ -240,11 +240,11 @@ class Recording(db.Model):
     #Properties
     mbid = db.Column(db.Unicode(32, collation='utf8_bin'), primary_key=True)
 
-    title = db.Column(db.UnicodeText(collation='utf8_bin'))
-    last_cached = db.Column(db.DateTime, nullable=True)
+    title = db.Column(db.UnicodeText(collation='utf8_bin'), nullable=True, default=None)
+    last_cached = db.Column(db.DateTime, nullable=True, default=None)
 
     # Relationships
-    artist_credit_id = db.Column(db.Integer, db.ForeignKey('artist_credit.id'))
+    artist_credit_id = db.Column(db.Integer, db.ForeignKey('artist_credit.id'), nullable=True, default=None)
     tracks = db.relationship("Track", backref="recording", passive_updates=False)
 
     def __init__(self, mbid):

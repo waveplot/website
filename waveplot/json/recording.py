@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-# Copyright 2013 Ben Ockmore
+# Copyright 2013, 2014 Ben Ockmore
 
 # This file is part of WavePlot Server.
 
@@ -19,58 +19,23 @@
 
 from __future__ import print_function, absolute_import, division
 
-import json
+from waveplot import manager, db
 
-from flask import request, make_response
+from waveplot.schema import Recording
 
-import waveplot.schema
-import waveplot.utils
+import uuid
 
-from waveplot import app
-from waveplot.schema import Session, Recording
+def pre_post(data=None, **kw):
+    # Delete everything except mbid
+    for key in data.keys():
+        if key != 'mbid':
+            del data[key]
 
-@app.route('/json/recording/<value>', methods = ['GET', 'PUT'])
-@waveplot.utils.crossdomain(origin = '*')
-def recording_all(value):
-    if value.startswith("list"):
-        return recording_list()
-    else:
-        return recording_mbid_get(value)
+    data['mbid'] = uuid.UUID(data['mbid']).hex
 
+manager.create_api(Recording, methods=['GET', 'POST'],
+                   preprocessors={
+                       'POST':[pre_post]
+                   }
+)
 
-def recording_mbid_get(value):
-    session = Session()
-
-    recording = session.query(Recording).filter_by(mbid=value).first()
-
-    if recording is None:
-        return make_response(json.dumps({u'result':u'failure', u'error':u"No such recording!"}))
-
-    tracks = recording.tracks
-
-    results = {u'mbid':value, u'waveplots':[]}
-
-    for track in tracks:
-        results[u'waveplots'].extend({u'uuid':w.uuid, u'audio_barcode':w.audio_barcode} for w in track.waveplots)
-
-    session.close()
-
-    return make_response(json.dumps(results))
-
-def recording_list():
-    session = Session()
-
-    min_linked_waveplots = int(request.args.get('linked-waveplots', "1"))
-    page = int(request.args.get('page', "1"))
-    limit = int(request.args.get('limit', "20"))
-
-    offset = (page - 1) * limit
-
-    """recordings = session.query(Recording).filter(Recording.waveplot_count >= min_linked_waveplots).offset(offset).limit(limit)
-
-    results = [{u"mbid":r.mbid, u'count':r.waveplot_count} for r in recordings]"""
-    results = []
-
-    session.close()
-
-    return make_response(json.dumps(results))

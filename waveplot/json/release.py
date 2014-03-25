@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-# Copyright 2013 Ben Ockmore
+# Copyright 2013, 2014 Ben Ockmore
 
 # This file is part of WavePlot Server.
 
@@ -19,53 +19,22 @@
 
 from __future__ import print_function, absolute_import, division
 
-import json
+from waveplot import manager, db
 
-from flask import request, make_response
+from waveplot.schema import Release
 
-import waveplot.schema
-import waveplot.utils
+import uuid
 
-from waveplot import app
-from waveplot.schema import Session, Release
+def pre_post(data=None, **kw):
+    # Delete everything except mbid
+    for key in data.keys():
+        if key != 'mbid':
+            del data[key]
 
-@app.route('/json/release', methods = ['GET'])
-@waveplot.utils.crossdomain(origin = '*')
-def release():
-    offset = int(request.args.get('offset', "0"))
-    limit = int(request.args.get('limit', "24"))
+    data['mbid'] = uuid.UUID(data['mbid']).hex
 
-    session = Session()
-
-    releases = session.query(Release).order_by(Release.title.asc()).offset(offset).limit(limit)
-
-    data = [
-        {
-            'id':r.mbid,
-            'title':r.title,
-            'artist_credit':r.artist_credit.name,
-            'url':None
-        } for r in releases.all()
-    ]
-
-    session.close()
-
-    return make_response(json.dumps(data))
-
-@app.route('/json/extreme-dr', methods = ['GET'])
-@waveplot.utils.crossdomain(origin = '*')
-def extreme_dr():
-
-    session = Session()
-
-    releases = session.query(Release).order_by(Release.dr_level.desc()).limit(10)
-
-    highest = [{u'title':r.title, u'artist':r.artist_credit.name, u'mbid':r.mbid, u'dr_level':r.dr_level / 10} for r in releases]
-
-    releases = session.query(Release).order_by(Release.dr_level.asc()).limit(10)
-
-    lowest = [{u'title':r.title, u'artist':r.artist_credit.name, u'mbid':r.mbid, u'dr_level':r.dr_level / 10} for r in releases]
-
-    session.close()
-
-    return make_response(json.dumps({u'highest':highest, u'lowest':lowest}))
+manager.create_api(Release, methods=['GET', 'POST'],
+                   preprocessors={
+                       'POST':[pre_post]
+                   }
+)

@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-# Copyright 2013 Ben Ockmore
+# Copyright 2013, 2014 Ben Ockmore
 
 # This file is part of WavePlot Server.
 
@@ -34,11 +34,10 @@ manager = APIManager(app, flask_sqlalchemy_db=db)
 
 VERSION = b'CITRUS'
 
-
 import waveplot.json.editor
 #import waveplot.json.homepage_data
 #import waveplot.json.editor
-#import waveplot.json.recording
-#import waveplot.json.release
+import waveplot.json.recording
+import waveplot.json.release
 #import waveplot.json.waveplot
 import waveplot.json.question

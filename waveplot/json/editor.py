@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-# Copyright 2013 Ben Ockmore
+# Copyright 2013, 2014 Ben Ockmore
 
 # This file is part of WavePlot Server.
 
