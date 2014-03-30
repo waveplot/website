@@ -36,8 +36,8 @@ VERSION = b'CITRUS'
 
 import waveplot.json.editor
 #import waveplot.json.homepage_data
-#import waveplot.json.editor
+import waveplot.json.editor
 import waveplot.json.recording
 import waveplot.json.release
-#import waveplot.json.waveplot
+import waveplot.json.waveplot
 import waveplot.json.question

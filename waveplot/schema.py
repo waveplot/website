@@ -328,24 +328,25 @@ class WavePlot(db.Model):
     dr_level = db.Column(db.SmallInteger)
 
     image_sha1 = db.Column(db.BINARY(length=20))
-    thumbnail_bin = db.Column(db.BINARY(length=50))
+    thumbnail = db.Column(db.BINARY(length=50))
     sonic_hash = db.Column(db.Integer)
 
     version = db.Column(db.String(20, collation='ascii_bin'))
 
     def __init__(self, uuid, length, trimmed_length, source_type, sample_rate,
-                 bit_rate, num_channels, dr_level, image_sha1, thumbnail_bin,
-                 sonic_hash, version):
+                 bit_depth, bit_rate, num_channels, dr_level, image_sha1,
+                 thumbnail, sonic_hash, version):
         self.uuid = uuid
         self.length = length
         self.trimmed_length = trimmed_length
         self.source_type = source_type
         self.sample_rate = sample_rate
+        self.bit_depth = bit_depth
         self.bit_rate = bit_rate
         self.num_channels = num_channels
         self.dr_level = dr_level
         self.image_sha1 = image_sha1
-        self.thumbnail_bin = thumbnail_bin
+        self.thumbnail = thumbnail
         self.sonic_hash = sonic_hash
         self.version = version
 

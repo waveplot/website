@@ -27,56 +27,62 @@ import base64
 
 from flask import request, make_response
 
+from flask.ext.restless import ProcessingException
+
 import waveplot.schema
 import waveplot.utils
 import waveplot.image
 
-from waveplot import app, VERSION
-from waveplot.schema import Session, WavePlot, Track, Recording, Editor, Edit, WavePlotContext, Release, uuid_h2b, uuid_b2h
+from waveplot import manager, db, VERSION
 
-@app.route('/json/waveplot/<value>', methods = ['GET', 'PUT', 'DELETE'])
-@waveplot.utils.crossdomain(origin = '*')
-def waveplot_all(value):
-    if value.startswith('list'):
-        return waveplot_list()
-    elif request.method == 'GET':
-        return waveplot_get_uuid(value)
-    elif request.method == 'PUT':
-        return waveplot_put_uuid(value)
+from waveplot.schema import WavePlot
 
-def waveplot_list():
-    page = int(request.args.get('page', "1"))
-    limit = int(request.args.get('limit', "20"))
-    barcode = int(request.args['barcode']) if 'barcode' in request.args else None
+def pre_post(data=None, **kw):
+    if data.get('version', None) != VERSION:
+        raise ProcessingException(message='Incorrect WavePlot Version - Update Client',
+                                  status_code=403)
 
-    offset = (page - 1) * limit
+    image = waveplot.image.WavePlotImage(data['image'])
 
-    session = Session()
+    data['image_sha1'] = image.sha1.digest()
 
-    if 'recording' in request.args:
-        recording = session.query(Recording).filter_by(mbid=request.args['recording']).first()
+    existing = db.session.query(WavePlot).filter_by(image_sha1 = image.sha1).first()
+    if existing is not None:
+        data['uuid'] = existing.uuid
+        return
 
-        if recording is None:
-            return make_response(json.dumps({u'result':u'failure', u'error':u"Recording not in database."}))
+    generated_uuid = uuid.uuid4()
+    while db.session.query(WavePlot).filter_by(uuid = unicode(generated_uuid.hex)).count():
+        generated_uuid = uuid.uuid4()
 
-        waveplots = recording.waveplots
-    else:
-        waveplots = session.query(WavePlot)
-        if barcode is not None:
-            waveplots = waveplots.filter_by(sonic_hash = barcode)
+    data['uuid'] = generated_uuid.hex
 
-        waveplots = waveplots.order_by(WavePlot.uuid_bin.asc()).offset(offset).limit(limit)
+    data['dr_level'] = int(float(data['dr_level']) * 10)
 
-    results = [{
-                u"uuid":w.uuid,
-                u'title':w.track.title if w.track is not None else None,
-                u'artist':w.track.recording.artist_credit.name if w.track is not None else None,
-                b"data":base64.b64encode(w.thumbnail_bin)
-               } for w in waveplots]
+    image.generate_image_data()
 
-    session.close()
+    data['thumbnail'] = image.thumb_data
+    data['sonic_hash'] = image.sonic_hash
 
-    return make_response(json.dumps(results))
+    data['length'] = datetime.timedelta(seconds=int(data['length']))
+    data['trimmed_length'] = data['length']
+
+    # Delete once it's saved
+    del data['image']
+    del data['editor']
+
+def post_post(result=None, **kw):
+    #wp.submit_date = datetime.datetime.utcnow()
+    pass
+
+def post_get(result=None, **kw):
+    result['thumbnail'] = base64.b64encode(result['thumbnail'])
+
+manager.create_api(WavePlot, methods=['GET', 'POST'],
+                   preprocessors={
+                       'POST':[pre_post]
+                   }
+)
 
 def waveplot_get_uuid(value):
 
@@ -132,8 +138,6 @@ def waveplot_get_uuid(value):
 
     return make_response(json.dumps(results))
 
-@app.route('/json/waveplot', methods = ['POST'])
-@waveplot.utils.crossdomain(origin = '*')
 def waveplot_post():
     if request.form.get('version', None) != VERSION:
         return make_response(json.dumps({u'result':u'failure', u'error':u"Incorrect client version or no version provided."}))
@@ -162,19 +166,11 @@ def waveplot_post():
     if l:
         return make_response(json.dumps({u'result':u'failure', u'error':u"Required data not provided. ({})".format(",".join(l))}))
 
-    editor = session.query(Editor).filter_by(key=f['editor']).first()
-    if editor is None:
-        return make_response(json.dumps({u'result':u'failure', u'error':u"Bad editor key ({})".format(f['editor'])}))
-
-    image = waveplot.image.WavePlotImage(f['image'])
-
-    wp.image_sha1 = image.sha1.digest()
+    #editor = session.query(Editor).filter_by(key=f['editor']).first()
+    #if editor is None:
+        #return make_response(json.dumps({u'result':u'failure', u'error':u"Bad editor key ({})".format(f['editor'])}))
 
     # Check for existing identical waveplot
-    existing = session.query(WavePlot).filter_by(image_sha1 = image.sha1).first()
-    if existing is not None:
-        return make_response(json.dumps({u'result':u'exists', u'uuid':existing.uuid}))
-
     generated_uuid = uuid.uuid4()
     while session.query(WavePlot).filter_by(uuid = generated_uuid).count():
         generated_uuid = uuid.uuid4()
@@ -194,25 +190,13 @@ def waveplot_post():
     wp.num_channels = int(f['num_channels'])
     wp.dr_level = int(float(f['dr_level']) * 10)
 
-    wp.source_type = f['source_type']
-    wp.sample_rate = f['sample_rate']
-    wp.bit_depth = f['bit_depth']
-    wp.bit_rate = f['bit_rate']
-
     image.save(generated_uuid.hex)
 
     session.add(wp)
     session.commit()
-    
+
     e = Edit(editor_id = editor.id, waveplot_uuid_bin = wp.uuid_bin, edit_time = datetime.datetime.utcnow(), edit_type = 0)
     session.add(e)
-
-    result_uuid = wp.uuid
-
-    session.commit()
-    session.close()
-
-    return make_response(json.dumps({u'result':u'success', u'uuid':result_uuid}))
 
 def waveplot_put_uuid(value):
     required_data = {'recording', 'release', 'track', 'disc', 'editor'}
@@ -233,7 +217,7 @@ def waveplot_put_uuid(value):
     wpc.disc_number = f['disc']
     session.add(wpc)
     session.commit()
-    
+
     e = Edit(editor_id = editor.id, waveplot_uuid_bin = wp.uuid_bin, edit_time = datetime.datetime.utcnow(), edit_type = 1)
     session.add(e)
     session.commit()
