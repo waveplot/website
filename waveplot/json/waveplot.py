@@ -67,20 +67,48 @@ def pre_post(data=None, **kw):
     data['length'] = datetime.timedelta(seconds=int(data['length']))
     data['trimmed_length'] = data['length']
 
+    data['edits'] = [{
+        "edit_time":datetime.datetime.utcnow().isoformat(),
+        "edit_type":0,
+        "editor_id":data['editor'],
+        "waveplot_uuid":data['uuid']
+    }]
+
     # Delete once it's saved
     del data['image']
     del data['editor']
 
 def post_post(result=None, **kw):
-    #wp.submit_date = datetime.datetime.utcnow()
-    pass
+    result['thumbnail'] = base64.b64encode(result['thumbnail'])
+    result['image_sha1'] = base64.b64encode(result['image_sha1'])
+    result['length'] = str(result['length'])
+    result['trimmed_length'] = str(result['trimmed_length'])
+    result['dr_level'] = result['dr_level'] / 10
 
 def post_get(result=None, **kw):
     result['thumbnail'] = base64.b64encode(result['thumbnail'])
+    result['image_sha1'] = base64.b64encode(result['image_sha1'])
+    result['length'] = str(result['length'])
+    result['trimmed_length'] = str(result['trimmed_length'])
+    result['dr_level'] = result['dr_level'] / 10
+
+def post_get_many(result=None, search_params=None, **kw):
+    for w in result['objects']:
+        w['thumbnail'] = base64.b64encode(w['thumbnail'])
+        w['image_sha1'] = base64.b64encode(w['image_sha1'])
+        w['length'] = str(w['length'])
+        w['trimmed_length'] = str(w['trimmed_length'])
+        w['dr_level'] = w['dr_level'] / 10
+
 
 manager.create_api(WavePlot, methods=['GET', 'POST'],
                    preprocessors={
                        'POST':[pre_post]
+                   },
+                   postprocessors={
+                       'GET_SINGLE':[post_get],
+                       'GET_MANY':[post_get_many],
+                       'POST':[post_post]
                    }
 )
 
@@ -106,29 +134,6 @@ def waveplot_get_uuid(value):
     results = {
         u'result':u'success',
         u'waveplot':{
-            u'uuid':wp.uuid,
-            u'length':str(wp.length),
-            u'trimmed_length':str(wp.trimmed_length),
-            u'recording':({
-                u'mbid':uuid_b2h(track.recording_mbid_bin)
-            } if track is not None else None),
-            u'release':({
-                u'mbid':release.mbid,
-                u'title':release.title
-            } if release is not None else None),
-            u'source_type':wp.source_type,
-            u'bit_rate':wp.bit_rate,
-            u'bit_depth':wp.bit_depth,
-            u'sample_rate':wp.sample_rate,
-            u'num_channels':wp.num_channels,
-            u'dr_level':wp.dr_level / 10,
-            u'sonic_hash':wp.sonic_hash,
-            u'track':({
-                u'title':track.title,
-                u'position':track.track_number,
-                u'disc':track.disc_number,
-                u'artist':track.artist_credit.name
-            } if track is not None else None),
             u'preview':preview,
             u'sonic_hash':wp.sonic_hash
         }
