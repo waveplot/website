@@ -73,41 +73,34 @@ class WavePlotImage():
         self.preview_data = None
         self.sonic_hash = None
 
-    def make_hash(self):
-        # Restrict data to 5% points (trimmed length)
-        start_index = end_index = 0
-        for i in range(0,len(self.raw_data)):
-            if ord(self.raw_data[i]) > 10:
-                start_index = i
-                break
-
-        for i in range(len(self.raw_data) - 1,-1,-1):
-            if ord(self.raw_data[i]) > 10:
-                end_index = i
-                break
-
-        image_data = self.raw_data[start_index:end_index+1]
+    def make_hash(self, start, end):
+        image_data = self.raw_data[start:end+1]
 
         # Compute value, converting to ASCII '0' and '1' for int conversion.
-        barcode_str = "".join(chr(ord(x) + 0x30) for x in
+        barcode_str = b"".join(chr(ord(x) + 0x30) for x in
                               resample_data(image_data, 16, 200, 1))
+
+        print(barcode_str)
 
         return int(barcode_str,2)
 
     def calculate_trimmed_length(self):
         min_val = 0
         for i, val in enumerate(self.raw_data):
-            if val > 10:
+            if ord(val) > 10:
                 min_val = i
                 break
 
-        max_val = len(self.raw_data)
+        max_val = 0
         for i, val in enumerate(reversed(self.raw_data)):
-            if val > 10:
+            if ord(val) > 10:
                 max_val = i
                 break
 
+        max_val = len(self.raw_data) - max_val
         self.trimmed_length = datetime.timedelta(seconds=int((max_val - min_val) / 4))
+
+        return (min_val, max_val)
 
     def generate_image_data(self):
         self.thumb_data = resample_data(self.raw_data, THUMB_IMAGE_WIDTH, 200,
@@ -116,9 +109,9 @@ class WavePlotImage():
         self.preview_data = resample_data(self.raw_data, PREVIEW_IMAGE_WIDTH,
                                           200, int(PREVIEW_IMAGE_HEIGHT / 2))
 
-        self.calculate_trimmed_length()
+        min_val, max_val = self.calculate_trimmed_length()
 
-        self.sonic_hash = self.make_hash()
+        self.sonic_hash = self.make_hash(min_val, max_val)
 
     def save(self, uuid):
         self.filename_prefix = waveplot_uuid_to_filename(uuid)
