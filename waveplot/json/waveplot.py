@@ -35,12 +35,19 @@ import waveplot.image
 
 from waveplot import manager, db, VERSION
 
-from waveplot.schema import WavePlot
+from waveplot.schema import WavePlot, Editor
 
 def pre_post(data=None, **kw):
     if data.get('version', None) != VERSION:
         raise ProcessingException(message='Incorrect WavePlot Version - Update Client',
                                   status_code=403)
+
+    editor = db.session.query(Editor).filter_by(key=data['editor']).first()
+    if editor is None:
+        raise ProcessingException(message='Invalid Editor Key',
+                                  status_code=403)
+
+    data['editor'] = editor.id
 
     image = waveplot.image.WavePlotImage(data['image'])
 
@@ -65,7 +72,9 @@ def pre_post(data=None, **kw):
     data['sonic_hash'] = image.sonic_hash
 
     data['length'] = datetime.timedelta(seconds=int(data['length']))
-    data['trimmed_length'] = data['length']
+    data['trimmed_length'] = image.trimmed_length
+
+    image.save(generated_uuid.hex)
 
     data['edits'] = [{
         "edit_time":datetime.datetime.utcnow().isoformat(),
@@ -175,33 +184,8 @@ def waveplot_post():
     #if editor is None:
         #return make_response(json.dumps({u'result':u'failure', u'error':u"Bad editor key ({})".format(f['editor'])}))
 
-    # Check for existing identical waveplot
-    generated_uuid = uuid.uuid4()
-    while session.query(WavePlot).filter_by(uuid = generated_uuid).count():
-        generated_uuid = uuid.uuid4()
-
-    wp.uuid_bin = generated_uuid.bytes
-
-    wp.length = datetime.timedelta(seconds=int(f['length']))
     #Calculate this - wp.trimmed_length = datetime.timedelta(seconds=int(f['length_trimmed']))
 
-    image.generate_image_data()
-
-    # Image Data in DB
-    wp.thumbnail_bin = image.thumb_data
-    wp.sonic_hash = image.sonic_hash
-
-    # Sonic properties
-    wp.num_channels = int(f['num_channels'])
-    wp.dr_level = int(float(f['dr_level']) * 10)
-
-    image.save(generated_uuid.hex)
-
-    session.add(wp)
-    session.commit()
-
-    e = Edit(editor_id = editor.id, waveplot_uuid_bin = wp.uuid_bin, edit_time = datetime.datetime.utcnow(), edit_type = 0)
-    session.add(e)
 
 def waveplot_put_uuid(value):
     required_data = {'recording', 'release', 'track', 'disc', 'editor'}

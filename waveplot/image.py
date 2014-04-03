@@ -22,6 +22,7 @@ from __future__ import print_function, absolute_import, division
 import os
 import hashlib
 import zlib
+import datetime
 import base64
 
 THUMB_IMAGE_WIDTH = 50
@@ -93,12 +94,29 @@ class WavePlotImage():
 
         return int(barcode_str,2)
 
+    def calculate_trimmed_length(self):
+        min_val = 0
+        for i, val in enumerate(self.raw_data):
+            if val > 10:
+                min_val = i
+                break
+
+        max_val = len(self.raw_data)
+        for i, val in enumerate(reversed(self.raw_data)):
+            if val > 10:
+                max_val = i
+                break
+
+        self.trimmed_length = datetime.timedelta(seconds=int((max_val - min_val) / 4))
+
     def generate_image_data(self):
         self.thumb_data = resample_data(self.raw_data, THUMB_IMAGE_WIDTH, 200,
                                         int(THUMB_IMAGE_HEIGHT / 2))
 
         self.preview_data = resample_data(self.raw_data, PREVIEW_IMAGE_WIDTH,
                                           200, int(PREVIEW_IMAGE_HEIGHT / 2))
+
+        self.calculate_trimmed_length()
 
         self.sonic_hash = self.make_hash()
 
