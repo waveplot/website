@@ -20,19 +20,23 @@
     <div class="row">
         <div class="col-md-12">
             <table>
-                <tr><td>Length</td><td style="padding-left:.5em;">Length</td></tr>
-                <tr><td>Trimmed Length</td><td style="padding-left:.5em;">Trimmed Length</td></tr>
-                <tr><td>DR Level</td><td style="padding-left:.5em;">DR Level</td></tr>
-                <tr><td>Source</td><td style="padding-left:.5em;">Source Type</td></tr>
-                <tr><td>Bit Rate</td><td style="padding-left:.5em;">Bit Rate</td></tr>
-                <tr><td>Bit Depth</td><td style="padding-left:.5em;">Bit Depth</td></tr>
-                <tr><td>Sample Rate</td><td style="padding-left:.5em;">Sample Rate</td></tr>
-                <tr><td>Audio Channels</td><td style="padding-left:.5em;">Num Channels</td></tr>
-                <tr><td>Sonic Hash</td><td style="padding-left:.5em;">Sonic Hash</td></tr>
+                <tr><td>Length</td><td style="padding-left:.5em;">{{waveplot.length}}</td></tr>
+                <tr><td>Trimmed Length</td><td style="padding-left:.5em;">{{waveplot.trimmed_length}}</td></tr>
+                <tr><td>DR Level</td><td style="padding-left:.5em;">{{waveplot.dr_level}}</td></tr>
+                <tr><td>Source</td><td style="padding-left:.5em;">{{waveplot.source_type}}</td></tr>
+                <tr><td>Bit Rate</td><td style="padding-left:.5em;">{{waveplot.bit_rate}}</td></tr>
+                <tr><td>Bit Depth</td><td style="padding-left:.5em;">{{waveplot.bit_depth}}</td></tr>
+                <tr><td>Sample Rate</td><td style="padding-left:.5em;">{{waveplot.sample_rate}}</td></tr>
+                <tr><td>Audio Channels</td><td style="padding-left:.5em;">{{waveplot.num_channels}}</td></tr>
+                <tr><td>Sonic Hash</td><td style="padding-left:.5em;">{{waveplot.sonic_hash}}</td></tr>
                 <tr><td>Track MBID</td><td style="padding-left:.5em;"><a href="http://musicbrainz.org/recording/{{data.recording.mbid}}">Track MBID</a></td></tr>
                 <tr><td>Recording MBID</td><td style="padding-left:.5em;"><a href="http://musicbrainz.org/recording/{{data.recording.mbid}}">Recording MBID</a></td></tr>
                 <tr><td>Release MBID</td><td style="padding-left:.5em;"><a href="http://musicbrainz.org/recording/{{data.recording.mbid}}">Release MBID</a></td></tr>
             </table>
         </div>
+    </div>
+
+    <div class="row">
+        <canvas waveplot width="400" height="151" class="waveplot-preview" data="waveplot.thumbnail"></canvas>
     </div>
 </div>

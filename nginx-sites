@@ -1,7 +1,11 @@
+# Copy this file into your nginx sites-enabled directory
 server {
     listen 80;
 
     root /var/www;
 
-    try_files $uri $uri/ index.html;
+    location / {
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
 }
