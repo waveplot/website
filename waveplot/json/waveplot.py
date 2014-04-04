@@ -26,6 +26,7 @@ import os.path
 import base64
 
 from flask import request, make_response
+from flask import abort, jsonify
 
 from flask.ext.restless import ProcessingException
 
@@ -33,7 +34,7 @@ import waveplot.schema
 import waveplot.utils
 import waveplot.image
 
-from waveplot import manager, db, VERSION
+from waveplot import manager, db, VERSION, app
 
 from waveplot.schema import WavePlot, Editor
 
@@ -120,6 +121,27 @@ manager.create_api(WavePlot, methods=['GET', 'POST'],
                        'POST':[post_post]
                    }
 )
+
+@app.route('/api/waveplot/<uuid>/preview', methods = ['GET'])
+def waveplot_preview(uuid):
+    try:
+        with open(waveplot.image.waveplot_uuid_to_filename(uuid)+"_preview", 'rb') as f:
+            data = f.read()
+    except IOError:
+        abort(404)
+
+    return jsonify({'data':base64.b64encode(data)})
+
+
+@app.route('/api/waveplot/<uuid>/full', methods = ['GET'])
+def waveplot_full(uuid):
+    try:
+        with open(waveplot.image.waveplot_uuid_to_filename(uuid), 'rb') as f:
+            data = f.read()
+    except IOError:
+        abort(404)
+
+    return jsonify({'data':base64.b64encode(data)})
 
 def waveplot_get_uuid(value):
 

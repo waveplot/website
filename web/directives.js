@@ -34,8 +34,8 @@ angular.module("waveplot.directives", []).directive('highlightHover', function (
             data: '='
         },
         link: function render(scope, element, attrs) {
-            scope.$watch('data', function(val) {
-                if(val == undefined)
+            scope.$watch('data', function(val , prev) {
+                if(val == prev)
                     return;
 
                 var full = !element.hasClass("waveplot-preview");

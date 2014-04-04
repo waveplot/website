@@ -1,10 +1,10 @@
 'use strict';
 
-var server = 'http://dev.waveplot.net:19048';
+var server = 'http://192.168.0.100:19048';
 
 function HomeCtrl($scope, $http, $translate, $translatePartialLoader) {
    delete $http.defaults.headers.common['X-Requested-With'];
-   
+
     $scope.items = [];
 
     $scope.loadMoreItems = function(){
@@ -12,15 +12,15 @@ function HomeCtrl($scope, $http, $translate, $translatePartialLoader) {
             $scope.items.push({"name":"Item" + i.toString()});
         }
     };
-   
+
    $scope.tweets_loaded = false;
    $scope.activity_loaded = false;
-    
+
     $http.get(server+'/json/tweets').success(function (data) {
       $scope.tweets = data;
       $scope.tweets_loaded = true;
    });
-   
+
 }
 
 HomeCtrl.resolve = {
