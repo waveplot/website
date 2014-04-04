@@ -8,4 +8,9 @@ server {
         index index.html;
         try_files $uri $uri/ /index.html;
     }
+
+    location /api {
+        include uwsgi_params;
+        uwsgi_pass unix:/tmp/uwsgi.sock;
+    }
 }

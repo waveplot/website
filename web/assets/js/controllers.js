@@ -1,7 +1,5 @@
 'use strict';
 
-var server = 'http://192.168.0.100:19048';
-
 function HomeCtrl($scope, $http, $translate, $translatePartialLoader) {
    delete $http.defaults.headers.common['X-Requested-With'];
 
@@ -16,7 +14,7 @@ function HomeCtrl($scope, $http, $translate, $translatePartialLoader) {
    $scope.tweets_loaded = false;
    $scope.activity_loaded = false;
 
-    $http.get(server+'/json/tweets').success(function (data) {
+    $http.get('/json/tweets').success(function (data) {
       $scope.tweets = data;
       $scope.tweets_loaded = true;
    });

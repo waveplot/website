@@ -10,11 +10,11 @@ function WavePlotViewController($scope, $modal, $http, $routeParams){
     }
 
 
-    $http.get(server+'/api/waveplot/'+$routeParams.uuid).success(function (data) {
+    $http.get('/api/waveplot/'+$routeParams.uuid).success(function (data) {
         $scope.waveplot = data;
     });
 
-    $http.get(server+'/api/waveplot/'+$routeParams.uuid+'/preview').success(function (data) {
+    $http.get('/api/waveplot/'+$routeParams.uuid+'/preview').success(function (data) {
         $scope.waveplot.preview = data.data;
     });
 
@@ -43,7 +43,7 @@ function WavePlotViewController($scope, $modal, $http, $routeParams){
 }
 
 function ModalInstanceCtrl($scope, $modalInstance, $http, uuid) {
-    $http.get(server+'/api/waveplot/'+uuid+'/full').success(function (data) {
+    $http.get('/api/waveplot/'+uuid+'/full').success(function (data) {
         $scope.data = data.data;
     });
 
