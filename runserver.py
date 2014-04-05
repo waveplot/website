@@ -24,4 +24,5 @@ config = {
     "port":19048
 }
 
-app.run(**config)
+if __name__ == '__main__':
+    app.run(**config)

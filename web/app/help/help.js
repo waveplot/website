@@ -1,6 +1,5 @@
 
 function HelpCtrl($scope, $modal, $http){
-    //Placeholder question until the server supports this.
     $scope.openQuestion = function(id) {
         $http.get('/api/question/'+id.toString()).success(function (data) {
             $modal.open({
@@ -15,15 +14,14 @@ function HelpCtrl($scope, $modal, $http){
         });
     };
 
-    $http.get('/api/question').success(function (data) {
+    $http.get('/api/question?results_per_page=100').success(function (data) {
         $scope.questions = [];
-        $.each(data, function(k,v){
-            if(v.answered != false){
+        $.each(data.objects, function(k,v){
+            if(v.answered !== false){
                 $scope.questions.push(v);
             }
         });
     });
-
 }
 
 HelpCtrl.resolve = {
@@ -31,4 +29,4 @@ HelpCtrl.resolve = {
         $translatePartialLoader.addPart('help');
         return $translate.refresh();
     }
-}
+};

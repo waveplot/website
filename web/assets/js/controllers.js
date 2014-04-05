@@ -1,32 +1,6 @@
 'use strict';
 
-function HomeCtrl($scope, $http, $translate, $translatePartialLoader) {
-   delete $http.defaults.headers.common['X-Requested-With'];
 
-    $scope.items = [];
-
-    $scope.loadMoreItems = function(){
-        for(var i = 0; i != 20; i++){
-            $scope.items.push({"name":"Item" + i.toString()});
-        }
-    };
-
-   $scope.tweets_loaded = false;
-   $scope.activity_loaded = false;
-
-    $http.get('/json/tweets').success(function (data) {
-      $scope.tweets = data;
-      $scope.tweets_loaded = true;
-   });
-
-}
-
-HomeCtrl.resolve = {
-    lang: function($translate, $translatePartialLoader, $q){
-        $translatePartialLoader.addPart('home');
-        return $translate.refresh();
-    }
-}
 
 function ExtremeDRCtrl($scope, $http){
    delete $http.defaults.headers.common['X-Requested-With'];

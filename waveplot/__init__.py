@@ -32,7 +32,7 @@ from waveplot.schema import Question, Editor
 
 def add_cors_header(response):
     # https://github.com/jfinkels/flask-restless/issues/223
-    response.headers['Access-Control-Allow-Origin'] = 'http://localhost'
+    response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'HEAD, GET, POST, PATCH, PUT, OPTIONS, DELETE'
     response.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Accept'
     response.headers['Access-Control-Allow-Credentials'] = 'true'
@@ -46,7 +46,7 @@ app.after_request(add_cors_header)
 VERSION = b'CITRUS'
 
 import waveplot.json.editor
-#import waveplot.json.homepage_data
+import waveplot.json.homepage_data
 import waveplot.json.recording
 import waveplot.json.release
 import waveplot.json.waveplot

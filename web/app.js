@@ -19,7 +19,7 @@ waveplot.config(function ($routeProvider, $locationProvider, $translateProvider,
         $routeProvider.when(match, info);
     });
 
-    $routeProvider.otherwise({redirectTo: '/', templateUrl: '/app/home/home.html', controller: HomeCtrl, resolve: HomeCtrl.resolve});
+    $routeProvider.otherwise({redirectTo: '/', templateUrl: '/app/home/home.html', controller: HomeController, resolve: HomeController.resolve});
 
     // Location settings
     $locationProvider.html5Mode(true).hashPrefix('!');

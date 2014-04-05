@@ -2,12 +2,12 @@
 function WavePlotViewController($scope, $modal, $http, $routeParams){
     $scope.waveplot = {
         "uuid":$routeParams.uuid
-    }
+    };
 
     $scope.links = {
         "expanded":false,
         "icon_class":"fa fa-caret-left"
-    }
+    };
 
 
     $http.get('/api/waveplot/'+$routeParams.uuid).success(function (data) {
@@ -27,10 +27,10 @@ function WavePlotViewController($scope, $modal, $http, $routeParams){
         }
 
         $scope.links.expanded = !$scope.links.expanded;
-    }
+    };
 
     $scope.fullWaveplot = function() {
-        var modalInstance = $modal.open({
+        $modal.open({
             templateUrl: '/app/view/waveplot-modal.html',
             controller: ModalInstanceCtrl,
             resolve: {
@@ -39,7 +39,7 @@ function WavePlotViewController($scope, $modal, $http, $routeParams){
                 }
             }
         });
-    }
+    };
 }
 
 function ModalInstanceCtrl($scope, $modalInstance, $http, uuid) {
@@ -50,4 +50,4 @@ function ModalInstanceCtrl($scope, $modalInstance, $http, uuid) {
     $scope.cancel = function () {
         $modalInstance.dismiss('cancel');
     };
-};
+}
