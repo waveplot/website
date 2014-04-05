@@ -2,7 +2,7 @@
 function HelpCtrl($scope, $modal, $http){
     //Placeholder question until the server supports this.
     $scope.openQuestion = function(id) {
-        $http.get(server+'/json/question/'+id.toString()).success(function (data) {
+        $http.get('/api/question/'+id.toString()).success(function (data) {
             $modal.open({
                 templateUrl: '/app/help/question-modal.html',
                 controller: QuestionModalController,
@@ -14,8 +14,8 @@ function HelpCtrl($scope, $modal, $http){
             });
         });
     };
-    
-    $http.get(server+'/json/question').success(function (data) {
+
+    $http.get('/api/question').success(function (data) {
         $scope.questions = [];
         $.each(data, function(k,v){
             if(v.answered != false){
