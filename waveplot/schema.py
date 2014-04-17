@@ -67,7 +67,7 @@ class Artist(db.Model):
     # Data derived from relationships
     artist_credit_assocs = db.relationship("ArtistArtistCredit", backref="artist", passive_updates=False)
 
-    def __init__(self, mbid, name):
+    def __init__(self, mbid, name=None):
         self.mbid = mbid
         self.name = name
 
@@ -119,7 +119,7 @@ class ArtistCredit(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    name = db.Column(db.UnicodeText(collation='utf8_bin'), nullable=True, default=None))
+    name = db.Column(db.UnicodeText(collation='utf8_bin'), nullable=True, default=None)
     last_cached = db.Column(db.DateTime, nullable=True, default=None)
 
     # Relationships
@@ -221,7 +221,6 @@ class Release(db.Model):
         self.last_cached = last_cached
         self.dr_level = dr_level
 
-
     def __repr__(self):
         return "<Release {!r}>".format(self.title)
 
@@ -293,7 +292,7 @@ class Track(db.Model):
     waveplots = db.relationship('WavePlot', secondary=TRACK_WAVEPLOT,
                                 backref=db.backref('tracks'), passive_updates=False)
 
-    def __init__(self, mbid, track_number, disc_number, release_mbid, recording_mbid, title = None,
+    def __init__(self, mbid, track_number, disc_number, release_mbid, recording_mbid, title = None, last_cached = None, dr_level=None):
         self.mbid = mbid
         self.track_number = track_number
         self.disc_number = disc_number
@@ -302,7 +301,6 @@ class Track(db.Model):
         self.title = title
         self.last_cached = last_cached
         self.dr_level = dr_level
-
 
     def __repr__(self):
         return "<Track {!r}>".format(self.title)
