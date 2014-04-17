@@ -4,7 +4,7 @@
     </div>
     <div class="row">
         <div class="col-md-6 col-md-push-6">
-            <canvas waveplot width="400" height="151" class="waveplot-preview" data="waveplot.preview" ng-click="fullWaveplot()" style="padding-top:50px; padding-bottom:50px"></canvas>
+            <canvas waveplot width="400" height="151" class="waveplot-preview" data="waveplot.preview" ng-click="fullWaveplot()"></canvas>
         </div>
         <div class="col-md-6 col-md-pull-6">
             <table>
@@ -17,17 +17,18 @@
                 <tr><td style="padding-right:20px; border-right: 1px solid #ccc;">Sample Rate</td><td style="padding-left:.5em;">{{waveplot.sample_rate}}</td></tr>
                 <tr><td style="padding-right:20px; border-right: 1px solid #ccc;">Audio Channels</td><td style="padding-left:.5em;">{{waveplot.num_channels}}</td></tr>
                 <tr><td style="padding-right:20px; border-right: 1px solid #ccc;">Sonic Hash</td><td style="padding-left:.5em;">{{waveplot.sonic_hash}}</td></tr>
-                <tr><td style="padding-right:20px; border-right: 1px solid #ccc;">Track MBID</td><td style="padding-left:.5em; font-family:monospace;"><small><a href="http://musicbrainz.org/recording/{{data.recording.mbid}}">550e8400-e29b-41d4-a716-446655440000</a></small></td></tr>
-                <tr><td style="padding-right:20px; border-right: 1px solid #ccc;">Recording MBID</td><td style="padding-left:.5em; font-family:monospace;"><small><a href="http://musicbrainz.org/recording/{{data.recording.mbid}}">550e8400-e29b-41d4-a716-446655440000</a></small></td></tr>
-                <tr><td style="padding-right:20px; border-right: 1px solid #ccc;">Release MBID</td><td style="padding-left:.5em; font-family:monospace;"><small><a href="http://musicbrainz.org/recording/{{data.recording.mbid}}">550e8400-e29b-41d4-a716-446655440000</a></small></td></tr>
             </table>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-12" style="cursor:pointer" ng-click="toggleLinks()">
-            <h4 style="margin:20px 0px 0px 0px;">Tracks <span class="pull-right" ng-class="links.icon_class"></span></h4>
-            <hr style="margin:10px 0px 0px 0px;"/>
+    <div class="row" style="margin-top:20px">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading" ng-click="toggleLinks()" style="cursor:pointer">Tracks <span class="pull-right" ng-class="links.icon_class"></span></div>
+                <div class="list-group" ng-show="links.expanded">
+                    <a href="/track/{{track.mbid}}" class="list-group-item" ng-repeat="track in waveplot.tracks">{{track.title}} {{track.mbid}}</a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
