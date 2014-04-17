@@ -51,6 +51,9 @@ def create_app(config):
     from waveplot.json.homepage_data import homepage_data_views
     app.register_blueprint(homepage_data_views)
 
+    from waveplot.json import api_root_view
+    app.register_blueprint(api_root_view)
+
     import waveplot.json.editor
     import waveplot.json.recording
     import waveplot.json.release
