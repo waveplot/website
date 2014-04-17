@@ -38,11 +38,8 @@ def create_app(config):
     app.config.update(config)
     app.after_request(add_cors_header)
 
-    print("Application created with the following config:")
-    for k,v in app.config.items():
-        print("{} = {}".format(k,v))
-
     from waveplot.schema import db
+    db.app = app
     db.init_app(app)
 
     global manager
@@ -53,5 +50,12 @@ def create_app(config):
 
     from waveplot.json.homepage_data import homepage_data_views
     app.register_blueprint(homepage_data_views)
+
+    import waveplot.json.editor
+    import waveplot.json.recording
+    import waveplot.json.release
+    import waveplot.json.waveplot
+    import waveplot.json.question
+    import waveplot.json.artist
 
     return app

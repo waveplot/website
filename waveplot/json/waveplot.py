@@ -63,7 +63,7 @@ def pre_post(data=None, **kw):
     while db.session.query(WavePlot).filter_by(uuid = unicode(generated_uuid.hex)).count():
         generated_uuid = uuid.uuid4()
 
-    data['uuid'] = generated_uuid.hex
+    data['uuid'] = str(generated_uuid)
 
     data['dr_level'] = int(float(data['dr_level']) * 10)
 

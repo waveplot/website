@@ -26,12 +26,9 @@ config = {
 
 app = create_app(config)
 
-import waveplot.json.editor
-import waveplot.json.recording
-import waveplot.json.release
-import waveplot.json.waveplot
-import waveplot.json.question
-import waveplot.json.artist
+print("Application created with the following config:")
+for k,v in app.config.items():
+    print("{} = {}".format(k,v))
 
 run_config = {
     "debug":True,
