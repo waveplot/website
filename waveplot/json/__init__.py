@@ -19,7 +19,6 @@
 
 from __future__ import print_function, absolute_import, division
 
-from waveplot import app
 from flask import jsonify, Blueprint
 
 api_root_view = Blueprint('api_root_view', __name__)
