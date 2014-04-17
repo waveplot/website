@@ -1,13 +1,11 @@
 from __future__ import print_function, absolute_import, division
 
-from flask import jsonify
+from flask import jsonify, Blueprint
 
 import twitter
 import memcache
 
 import waveplot.utils
-
-from waveplot import app
 from waveplot.passwords import passwords
 
 def tweet_to_html(data):
@@ -29,8 +27,9 @@ def tweet_to_html(data):
 
     return text
 
+homepage_data_views = Blueprint('homepage_data', __name__)
 
-@app.route('/api/tweets', methods = ['GET'])
+@homepage_data_views.route('/api/tweets', methods = ['GET'])
 def tweets():
     mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 

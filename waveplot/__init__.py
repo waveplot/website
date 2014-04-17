@@ -19,16 +19,10 @@
 
 from flask import Flask
 from flask.ext.restless import APIManager
-from flask.ext.sqlalchemy import SQLAlchemy
 
-from waveplot.passwords import passwords
-#from waveplot.schema import Editor
+VERSION = b'CITRUS'
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://{}:{}@{}/waveplot_test'.format(passwords['mysql']['username'],passwords['mysql']['password'],passwords['mysql']['host'])
-db = SQLAlchemy(app)
-
-from waveplot.schema import Question, Editor
+manager = APIManager()
 
 def add_cors_header(response):
     # https://github.com/jfinkels/flask-restless/issues/223
@@ -39,16 +33,25 @@ def add_cors_header(response):
 
     return response
 
-manager = APIManager(app, flask_sqlalchemy_db=db)
+def create_app(config):
+    app = Flask(__name__)
+    app.config.update(config)
+    app.after_request(add_cors_header)
 
-app.after_request(add_cors_header)
+    print("Application created with the following config:")
+    for k,v in app.config.items():
+        print("{} = {}".format(k,v))
 
-VERSION = b'CITRUS'
+    from waveplot.schema import db
+    db.init_app(app)
 
-import waveplot.json.editor
-import waveplot.json.homepage_data
-import waveplot.json.recording
-import waveplot.json.release
-import waveplot.json.waveplot
-import waveplot.json.question
-import waveplot.json.artist
+    global manager
+    manager.init_app(app, flask_sqlalchemy_db=db)
+
+    from waveplot.json.waveplot import waveplot_views
+    app.register_blueprint(waveplot_views)
+
+    from waveplot.json.homepage_data import homepage_data_views
+    app.register_blueprint(homepage_data_views)
+
+    return app

@@ -19,9 +19,9 @@
 
 from __future__ import print_function, absolute_import, division
 
-from waveplot import manager, db
+from waveplot import manager
 
-from waveplot.schema import Release
+from waveplot.schema import db, Release
 
 import uuid
 

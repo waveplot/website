@@ -19,9 +19,9 @@
 
 from __future__ import print_function, absolute_import, division
 
-from waveplot import manager, db
+from waveplot import manager
 
-from waveplot.schema import Question
+from waveplot.schema import db, Question
 
 
 def post_get(result=None, **kw):

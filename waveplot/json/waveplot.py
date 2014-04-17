@@ -26,7 +26,7 @@ import os.path
 import base64
 
 from flask import request, make_response
-from flask import abort, jsonify
+from flask import abort, jsonify, Blueprint
 
 from flask.ext.restless import ProcessingException
 
@@ -34,9 +34,9 @@ import waveplot.schema
 import waveplot.utils
 import waveplot.image
 
-from waveplot import manager, db, VERSION, app
+from waveplot import manager, VERSION
 
-from waveplot.schema import WavePlot, Editor
+from waveplot.schema import db, WavePlot, Editor
 
 def pre_post(data=None, **kw):
     if data.get('version', None) != VERSION:
@@ -122,10 +122,15 @@ manager.create_api(WavePlot, methods=['GET', 'POST'],
                    }
 )
 
-@app.route('/api/waveplot/<uuid>/preview', methods = ['GET'])
-def waveplot_preview(uuid):
+
+waveplot_views = Blueprint('waveplot_views', __name__)
+
+@waveplot_views.route('/api/waveplot/<id>/preview', methods = ['GET'])
+def waveplot_preview(id):
+    id = uuid.UUID(id).hex
+
     try:
-        with open(waveplot.image.waveplot_uuid_to_filename(uuid)+"_preview", 'rb') as f:
+        with open(waveplot.image.waveplot_uuid_to_filename(id)+"_preview", 'rb') as f:
             data = f.read()
     except IOError:
         abort(404)
@@ -133,10 +138,12 @@ def waveplot_preview(uuid):
     return jsonify({'data':base64.b64encode(data)})
 
 
-@app.route('/api/waveplot/<uuid>/full', methods = ['GET'])
-def waveplot_full(uuid):
+@waveplot_views.route('/api/waveplot/<id>/full', methods = ['GET'])
+def waveplot_full(id):
+    id = uuid.UUID(id).hex
+
     try:
-        with open(waveplot.image.waveplot_uuid_to_filename(uuid), 'rb') as f:
+        with open(waveplot.image.waveplot_uuid_to_filename(id), 'rb') as f:
             data = f.read()
     except IOError:
         abort(404)

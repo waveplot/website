@@ -21,7 +21,7 @@ from __future__ import print_function, absolute_import, division
 
 from flask.ext.restless import ProcessingException
 
-from waveplot import manager, db
+from waveplot import manager
 from waveplot.schema import Artist
 
 manager.create_api(Artist, methods=['GET', 'POST'])

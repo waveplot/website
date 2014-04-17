@@ -37,7 +37,11 @@ from __future__ import print_function, absolute_import, division
 
 import base64
 
-from waveplot import db
+from flask.ext.sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+
 
 TRACK_WAVEPLOT = db.Table(
     'track_waveplot',

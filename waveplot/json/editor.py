@@ -23,8 +23,8 @@ import random
 
 from flask.ext.restless import ProcessingException
 
-from waveplot import manager, db
-from waveplot.schema import Editor
+from waveplot import manager
+from waveplot.schema import db, Editor
 from waveplot.utils import SendEmail
 
 ACTIVATION_EMAIL_BODY = """
