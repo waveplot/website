@@ -138,4 +138,58 @@ angular.module("waveplot.directives", []).directive('highlightHover', function (
             });
         }
     };
+}).directive('dateToAgo', function () {
+    return {
+        scope: {
+            dateToAgo: '='
+        },
+        link: function dateToAgoFunc(scope, element, attrs) {
+            var d = new Date(scope.dateToAgo);
+            var current = new Date();
+
+            if(d > current) {
+                element.text("future");
+                return;
+            }
+
+            var secs = (current - d)/1000;
+            var mins = secs/60;
+            var hours = mins/60;
+
+            var diff_string = "";
+            var value;
+
+            if(hours < 23.5) {
+                if(mins > 59) {
+                    value = hours;
+                    diff_string = " hour";
+                } else if(secs < 60) {
+                    value = secs;
+                    diff_string = " second";
+                } else {
+                    value = mins;
+                    diff_string = " minute";
+                }
+            } else {
+                var days = hours/24;
+                var months = days/30;
+                var years = months/12;
+
+                if(months > 11.5) {
+                    value = years;
+                    diff_string = " year";
+                } else if(days < 30) {
+                    value = days;
+                    diff_string = " minute";
+                } else {
+                    value = months;
+                    diff_string = " month";
+                }
+            }
+
+            value = value.toFixed(0);
+            diff_string = value + diff_string + (value > 1 ? "s ago" : " ago");
+            element.text(diff_string);
+        }
+    }
 });

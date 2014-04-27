@@ -54,10 +54,10 @@ def pre_post(data=None, **kw):
 
     data['image_sha1'] = image.sha1.digest()
 
-    existing = db.session.query(WavePlot).filter_by(image_sha1 = image.sha1).first()
+    existing = db.session.query(WavePlot).filter_by(image_sha1 = data['image_sha1']).first()
     if existing is not None:
-        data['uuid'] = existing.uuid
-        return
+        raise ProcessingException(message='Location: /api/waveplot/'+existing.uuid,
+                                  status_code=303)
 
     generated_uuid = uuid.uuid4()
     while db.session.query(WavePlot).filter_by(uuid = unicode(generated_uuid.hex)).count():

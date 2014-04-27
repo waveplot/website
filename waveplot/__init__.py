@@ -61,4 +61,22 @@ def create_app(config):
     import waveplot.json.question
     import waveplot.json.artist
 
+    from waveplot.schema import Track
+    manager.create_api(Track, methods=['GET'], include_columns=[
+        "mbid",
+        "waveplots",
+        "waveplots.uuid",
+    ])
+
+    from waveplot.schema import Edit
+    manager.create_api(Edit, methods=['GET'], include_columns=[
+        "id",
+        "edit_time",
+        "edit_type",
+        "editor",
+        "editor.id",
+        "waveplot",
+        "waveplot.uuid"
+    ])
+
     return app

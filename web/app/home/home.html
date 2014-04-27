@@ -54,7 +54,7 @@
                         <span class="fa fa-spinner fa-spin"></span>
                     </li>
                 </ul>
-            </div>      
+            </div>
         </div>
         <div class="col-md-4">
             <div class="panel panel-default">
@@ -63,13 +63,19 @@
                 </div>
 
                 <!-- List group -->
-                <ul class="list-group">                   
+                <ul class="list-group">
+                    <li style="padding-bottom:0px" data-ng-show="activity_loaded" class="list-group-item" data-ng-repeat="activity in activities">
+                        <small>
+                            <div class="pull-right" date-to-ago="activity.edit_time"></div>
+                            <div>{{editors[activity.editor.id].name}} added <code>{{activity.waveplot.uuid | limitTo : 8}}...</code></div>
+                            <div class="text-center"><small><span class="fa fa-ellipsis-h"></span></small></div>
+                        </small>
+                    </li>
                     <li class="list-group-item text-center" data-ng-hide="activity_loaded">
                         <span class="fa fa-spinner fa-spin"></span>
                     </li>
-                    <li data-ng-show="activity_loaded" class="list-group-item" data-ng-repeat="tweet in tweets" data-ng-bind-html-unsafe="'<small>'+tweet+'</small>'"></li>
                 </ul>
-            </div>      
+            </div>
         </div>
     </div>
 </div>
