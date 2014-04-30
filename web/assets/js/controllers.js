@@ -231,19 +231,3 @@ function ActivateCtrl($scope,$routeParams,$http){
     });
 }
 
-function BrowseReleases($scope, $http){
-    delete $http.defaults.headers.common['X-Requested-With'];
-
-    $scope.selected = [];
-    $scope.releases = [];
-    var num_releases = 0;
-
-    $scope.get_releases = function(){
-        $scope.disable_scroll = "true";
-        $http.get(server+'/json/release?offset='+num_releases.toString()).success(function(data){
-            $scope.releases = $scope.releases.concat(data);
-            $scope.disable_scroll = "false";
-        });
-        num_releases += 24;
-    };
-}

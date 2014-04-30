@@ -1,15 +1,15 @@
 <div class="container">
     <div class="row" infinite-scroll="get_releases()" infinite-scroll-distance="3" infinite-scroll-disabled="{{disable_scroll}}" style="margin-top:30px">
-        <div class="row" ng-repeat="r in releases" style="padding:10px" id="row_{{r.id}}" highlight-hover click-scroll>
+        <div class="row" ng-repeat="r in releases" style="padding:10px" id="row_{{r.mbid}}" highlight-hover click-scroll>
             <div class="col-md-1">
-                <img class="img-responsive" fallback-src='https://coverartarchive.org/release/{{r.id}}/front-250' src='/img/missingart.png'></img>
+                <img class="img-responsive" fallback-src='https://coverartarchive.org/release/{{r.mbid}}/front-250' src='/assets/img/missingart.png'></img>
             </div>
             <div class="col-md-11">
                 <b>{{r.title}}</b><br/>
                 {{r.artist_credit}}
             </div>
         </div>
-        <div class="row text-center" data-ng-show="disable_scroll">
+        <div class="row text-center" ng-show="disable_scroll">
             <span class="fa fa-spinner fa-spin" style="margin-bottom:20px"></span>
         </div>
     </div>

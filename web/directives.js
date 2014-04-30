@@ -28,6 +28,21 @@ angular.module("waveplot.directives", []).directive('highlightHover', function (
             });
         }
     };
+}).directive('fallbackSrc', function () {
+//http://stackoverflow.com/questions/16349578/angular-directive-for-a-fallback-image
+    return {
+        link: function postLink(scope, iElement, iAttrs) {
+            iElement.bind("load", function() {
+                img = new Image();
+
+                img.src = iAttrs.fallbackSrc;
+
+                img.onload = function() {
+                    iElement.attr('src', this.src);
+                };
+            });
+        }
+    };
 }).directive('waveplot', function () {
     return {
         scope: {
