@@ -53,6 +53,7 @@
         <script src="/app/browse/browse_release.js"></script>
 
         <script src="/app/view/waveplot.js"></script>
+        <script src="/app/view/release.js"></script>
 
         <script src="/app/register/register.js"></script>
 
@@ -86,7 +87,7 @@
                         <li data-ng-class="getNavClass(1);"><a href="/help" translate>help</a></li>
                         <li><a href="/latest-downloads" translate>downloads</a></li>
                         <li class="dropdown">
-                            <a data-toggle="dropdown" href="#"><span translate>browse.top</span> <b class="caret"></b></a>
+                            <a data-toggle="dropdown" style="cursor:pointer;"><span translate>browse.top</span> <b class="caret"></b></a>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
                                 <li><a href="#"><span class="fa fa-users" style="margin-right:1em;"></span><span translate>browse.artists</span></a></li>
                                 <li><a href="/release" data-ng-click="setRoute(3);"><span class="fa fa-th" style="margin-right:1em;"></span><span translate>browse.albums</span></a></li>

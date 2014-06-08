@@ -130,7 +130,7 @@ def waveplot_preview(id):
     id = uuid.UUID(id).hex
 
     try:
-        with open(waveplot.image.waveplot_uuid_to_filename(id)+"_preview", 'rb') as f:
+        with open(os.path.join("./static/images/waveplots/previews",id[:3],id), 'rb') as f:
             data = f.read()
     except IOError:
         abort(404)
@@ -143,7 +143,7 @@ def waveplot_full(id):
     id = uuid.UUID(id).hex
 
     try:
-        with open(waveplot.image.waveplot_uuid_to_filename(id), 'rb') as f:
+        with open(os.path.join("./static/images/waveplots/full",id[:3],id), 'rb') as f:
             data = f.read()
     except IOError:
         abort(404)

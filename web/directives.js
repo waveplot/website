@@ -1,6 +1,6 @@
 angular.module("waveplot.directives", []).directive('highlightHover', function () {
     return {
-        link: function highlight(scope, element, attrs) {
+        link: function highlightHover(scope, element, attrs) {
             element.on('mouseenter', function(){
                 element.addClass('highlight-hover');
             });
@@ -12,7 +12,7 @@ angular.module("waveplot.directives", []).directive('highlightHover', function (
     };
 }).directive('highlightSelect', function () {
     return {
-        link: function highlight(scope, element, attrs) {
+        link: function highlightSelect(scope, element, attrs) {
             element.on('click', function(){
                 element.toggleClass('highlight-select');
             });
@@ -20,7 +20,7 @@ angular.module("waveplot.directives", []).directive('highlightHover', function (
     };
 }).directive('clickScroll', function () {
     return {
-        link: function highlight(scope, element, attrs) {
+        link: function clickScroll(scope, element, attrs) {
             element.on('click', function(){
                 $('html, body').animate({
                     scrollTop: element.offset().top - 50
