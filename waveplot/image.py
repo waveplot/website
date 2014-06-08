@@ -77,10 +77,15 @@ class WavePlotImage():
         image_data = self.raw_data[start:end+1]
 
         # Compute value, converting to ASCII '0' and '1' for int conversion.
-        barcode_str = b"".join(chr(ord(x) + 0x30) for x in
-                              resample_data(image_data, 16, 200, 1))
+        resampled_data = list(map(ord,resample_data(image_data, 16, 200, 200)))
 
-        print(barcode_str)
+        average = sum(resampled_data) / len(resampled_data)
+
+        # '1' if value > average, otherwise '0'
+        barcode_str = b"".join(
+            ('1' if (x > average) else '0')
+            for x in resampled_data
+        )
 
         return int(barcode_str,2)
 
