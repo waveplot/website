@@ -1,5 +1,6 @@
 <div class="container">
-    <div class="row" infinite-scroll="get_releases()" infinite-scroll-distance="3" infinite-scroll-disabled="{{disable_scroll}}" style="margin-top:30px">
+    <input type="search" class="form-control" placeholder="Filter... (case-sensitive)" style="margin-top:30px" ng-model="filter" ng-change="filter_releases()">
+    <div class="row" infinite-scroll="get_releases()" infinite-scroll-distance="3" infinite-scroll-disabled="{{disable_scroll}}" infinite-scroll-immediate-check="true" style="margin-top:30px">
         <a href="/release/{{r.mbid}}" ng-repeat="r in releases">
             <div class="row" style="padding:10px" id="row_{{r.mbid}}" highlight-hover click-scroll>
 
@@ -8,7 +9,7 @@
                 </div>
                 <div class="col-md-11">
                     <b>{{r.title}}</b><br/>
-                    {{r.artist_credit}}
+                    <i>{{r.artist_credit.name}}</i>
                 </div>
             </div>
         </a>

@@ -111,14 +111,14 @@ def post_get_many(result=None, search_params=None, **kw):
         w['dr_level'] = w['dr_level'] / 10
 
 
-manager.create_api(WavePlot, methods=['GET', 'POST'],
+manager.create_api(WavePlot, methods=['GET'],
                    preprocessors={
-                       'POST':[pre_post]
+                       #'POST':[pre_post]
                    },
                    postprocessors={
                        'GET_SINGLE':[post_get],
-                       'GET_MANY':[post_get_many],
-                       'POST':[post_post]
+                       'GET_MANY':[post_get_many]
+                       #'POST':[post_post]
                    }
 )
 

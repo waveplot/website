@@ -13,6 +13,13 @@ function ReleaseViewController($scope, $modal, $http, $routeParams){
                 return a.track_number - b.track_number;
             }
         });
+
         $scope.release = data;
+
+        $.each($scope.release.tracks, function(k, v) {
+            $http.get('/api/track/'+v.mbid).success(function(data){
+                $scope.release.tracks[k] = data;
+            });
+        });
     });
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf8 -*-
 
-# Copyright 2013 Ben Ockmore
+# Copyright 2014 Ben Ockmore
 
 # This file is part of WavePlot Server.
 
@@ -21,20 +21,25 @@
 import datetime
 import requests
 import time
-from collections import Counter
+import json
+from collections import Counter, defaultdict
 
 from sqlalchemy import func
 
 import waveplot.schema
-from waveplot.schema import uuid_h2b, uuid_b2h, Artist, ArtistCredit, Artist_ArtistCredit, Release, Recording, Session, Track, WavePlot, WavePlotContext
+from waveplot.schema import Artist, ArtistCredit, ArtistArtistCredit, Release, Recording, Track, WavePlot, db
 
-waveplot.schema.setup()
+from waveplot import create_app
+from waveplot.passwords import passwords
 
 last_query_time = datetime.datetime.utcnow()
 
+def pprint(data):
+     return json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+
 def query_mb(url):
     global last_query_time
-    
+
     delta = datetime.datetime.utcnow() - last_query_time
 
     if delta.seconds == 0:
@@ -45,205 +50,244 @@ def query_mb(url):
 
     return r
 
-def process_artist_credit(credit_data, session):
-    # This should probably be replaced with an mbid-based method
-    # Two artist credits which render the same will get mixed up.
-    credit_name = "".join(c['name']+c['joinphrase'] for c in credit_data)
+def get_artist_credit_for_data(data):
+    credit_name = "".join(c['name']+c['joinphrase'] for c in data)
 
-    db_credit = session.query(ArtistCredit).filter_by(name=credit_name).first()
+    for m in db.session.query(ArtistCredit).filter_by(name=credit_name):
+        # Check that mbids match
+        for assoc in m.artist_assocs:
+            if data[assoc.position]['artist']['id'] != assoc.artist_mbid:
+                raise LookupError
 
-    if db_credit is not None:
-        return db_credit
+        return m
 
-    db_credit = ArtistCredit(credit_name)
-    session.add(db_credit)
+    raise LookupError
 
-
-    for pos, credit in enumerate(credit_data):
-        artist_data = credit['artist']
-        db_artist = session.query(Artist).filter_by(mbid_bin=uuid_h2b(artist_data['id'])).first()
-
-        if db_artist is None:
-            db_artist = Artist(artist_data['id'])
-            session.add(db_artist)
-
-        db_artist.name = artist_data['name']
-        db_artist.last_cached = datetime.datetime.utcnow()
-
-        assoc = Artist_ArtistCredit()
-        assoc.credit_name = credit['name']
-        assoc.join_phrase = credit['joinphrase']
-        assoc.position = pos
-
-        assoc.artist_credit = db_credit
-
-        db_artist.artist_credit_assocs.append(assoc)
-
-    session.commit()
-
-    return db_credit
-
-def cache_track(track_mbid_bin, session, rel, track_num, disc_num, rec, track_data = None):
-    if track_data is None:
-        return
-
-    track = session.query(Track).filter_by(mbid_bin = uuid_h2b(track_data['id'])).first()
-
-    if track is None:
-        track = Track(track_data['id'], track_num, disc_num, rel, rec)
-
-    track.cache(track_data)
-    session.commit()
-    track.artist_credit = process_artist_credit(track_data['artist-credit'],session)
-    session.commit()
-
-    return track, track_data
-
-def cache_recording(recording_mbid_bin, session, recording_data = None):
-    if recording_data is None:
-        url = ("http://musicbrainz.org/ws/2/recording/" + uuid_b2h(recording_mbid_bin) +
-                   "?inc=artist-credits&fmt=json")
-
-        try:
-            r = query_mb(url)
-        except requests.ConnectionError:
-            return (None, None)
-
-        try:
-            recording_data = r.json()
-        except ValueError:
-            return (None, None)
-
-    rec = session.query(Recording).filter_by(mbid_bin = uuid_h2b(recording_data['id'])).first()
-
-    if rec is None:
-        rec = Recording(recording_data['id'])
-        session.add(rec)
-
-    rec.cache(recording_data)
-    session.commit()
-    rec.artist_credit = process_artist_credit(recording_data['artist-credit'], session)
-    session.commit()
-
-    return rec, recording_data
-
-def cache_release(release_mbid_bin, session, release_data = None):
-    if release_data is None:
-        url = ("http://musicbrainz.org/ws/2/release/" + uuid_b2h(release_mbid_bin) +
-                   "?inc=recordings artist-credits&fmt=json")
-
-        try:
-            r = query_mb(url)
-        except requests.ConnectionError:
-            return (None, None)
-
-        try:
-            release_data = r.json()
-        except ValueError:
-            return (None, None)
-
-    if "id" not in release_data:
-        print(release_data)
-        return (None, None)
-
-    rel = session.query(Release).filter_by(mbid_bin = uuid_h2b(release_data['id'])).first()
-
-    if rel is None:
-        rel = Release(release_data['id'])
-        session.add(rel)
-
-    rel.cache(release_data)
-    session.commit()
-    rel.artist_credit = process_artist_credit(release_data['artist-credit'], session)
-    session.commit()
-
-    return (rel, release_data)
-
-def cache_release_and_associated_entities(release, session):
-    release_data = cache_release(release.mbid_bin, session)[1]
-
-    if release_data is None:
-        return
-
-    for t in release.tracks:
-        track_data = release_data['media'][t.disc_number-1]['tracks'][t.track_number-1]
-        rec = cache_recording(t.recording_mbid_bin, session, track_data['recording'])[0]
-
-        if rec is None:
+def create_artist_credit(data):
+    # Create new artists
+    artists = [x['artist'] for x in data]
+    for artist in artists:
+        if db.session.query(Artist).filter_by(mbid=artist['id']).first() is not None:
             continue
 
-        cache_track(t.mbid_bin, session, release, t.track_number, t.disc_number, rec, track_data)
+        new_artist = Artist(artist['id'], artist['name'])
+        new_artist.last_cached = datetime.datetime.utcnow()
+        db.session.add(new_artist)
+        db.session.commit()
 
-    session.commit()
+    # Create artist credit
+    credit_name = "".join(c['name']+c['joinphrase'] for c in data)
+    new_credit = ArtistCredit(credit_name)
+    new_credit.last_cached = datetime.datetime.utcnow()
+    db.session.add(new_credit)
+    db.session.commit()
 
-def process_contexts_for_release(release_mbid_bin, session):
+    # Create associations
+    for i, credit in enumerate(data):
+        new_assoc = ArtistArtistCredit(credit['name'], credit['joinphrase'], i, new_credit.id, credit['artist']['id'])
+        db.session.add(new_assoc)
+        db.session.commit()
 
-    rel, release_data = cache_release(release_mbid_bin, session)
+    return new_credit
 
-    if release_data is None:
+def process_artist_credit(data):
+    try:
+        return get_artist_credit_for_data(data)
+    except LookupError:
+        return create_artist_credit(data)
+
+def change_artist_mbid(artist, new_mbid):
+    pass
+
+def change_recording_mbid(recording, new_mbid):
+    # Create new recording with the same data and relationships but
+    # different primary key, then delete old recording
+    pass
+
+def change_release_mbid(release, new_mbid):
+    pass
+
+def cache_artist(artist):
+    url = (
+        'http://musicbrainz.org/ws/2/artist/{}'
+        '?fmt=json'
+    ).format(artist.mbid)
+
+    response = query_mb(url)
+
+    if response.status_code != 200:
         return
 
-    # Process contexts
-    contexts = session.query(WavePlotContext).filter_by(release_mbid_bin = release_mbid_bin)
+    data = response.json()
 
-    for wpc in contexts:
-        wp = session.query(WavePlot).filter_by(uuid_bin = wpc.uuid_bin).first()
+    for key in {'id','name'}:
+        if key not in data:
+            return
 
-        if wp is None:
-            continue
+    # Handle merging of recordings
+    if artist.mbid != data['id']:
+        change_artist_mbid(artist, data['id'])
 
-        try:
-            track_data = release_data['media'][wpc.disc_number - 1]['tracks'][wpc.track_number - 1]
-        except IndexError:
-            pass
-        else:
-            recording_data = track_data['recording']
+    artist.name = data['name']
+    artist.last_cached = datetime.datetime.utcnow()
 
-            if wpc.recording_mbid_bin != uuid_h2b(recording_data['id']):
-                continue
+    db.session.commit()
 
-            # Perfect Match, continue
-            rec = cache_recording(wpc.recording_mbid_bin, session, recording_data)[0]
+def cache_recording(recording):
+    url = (
+        'http://musicbrainz.org/ws/2/recording/{}'
+        '?inc=artist-credits&fmt=json'
+    ).format(recording.mbid)
 
-            if rec is None:
-                continue
+    response = query_mb(url)
 
-            track = cache_track(None, session, rel, wpc.track_number, wpc.disc_number, rec, track_data)[0]
+    if response.status_code != 200:
+        return
 
-            wp.recording = rec
-            wp.track = track
+    data = response.json()
 
-            session.delete(wpc) # Remove the wpc if it's been processed
+    for key in {'id','title'}:
+        if key not in data:
+            return
 
-    rel.calculate_dr()
-    session.commit()
+    # Handle merging of recordings
+    if recording.mbid != data['id']:
+        change_recording_mbid(recording, data['id'])
 
+    recording.title = data['title']
+    recording.last_cached = datetime.datetime.utcnow()
 
-session = Session()
+    db.session.commit()
 
-idle = False
+    recording.artist_credit = process_artist_credit(data['artist-credit'])
+    db.session.commit()
 
-while 1:
-    if idle:
-        time.sleep(5) # Sleep for 30 seconds if things haven't just been processing
+def cache_track(track, data):
+    media = data['media']
 
-    contexts = session.query(WavePlotContext.release_mbid_bin, func.count(WavePlotContext.release_mbid_bin)).group_by(WavePlotContext.release_mbid_bin).all()
+    if track.disc_number > len(media):
+        return
+    medium = media[track.disc_number - 1]
 
-    idle = not contexts
+    tracks = medium['tracks']
 
-    if contexts:
-        contexts.sort(key = lambda x: x[1], reverse = True)
+    if track.track_number > len(tracks):
+        return
+    track_data = tracks[track.track_number - 1]
 
-        i = 0
-        for rel_mbid, count in contexts:
-            process_contexts_for_release(rel_mbid, session)
-            i += 1
-            print("Processed {}/{}".format(i,len(contexts)))
+    if track.mbid != track_data['id']:
+        # Not sure what to do here yet, so leave uncached
+        return
 
-    release = session.query(Release).order_by(Release.last_cached.asc()).first()
+    track.title = track_data['title']
+    track.last_cached = datetime.datetime.utcnow()
 
-    if release is not None:
-        cache_release_and_associated_entities(release,session)
+    db.session.commit()
 
+    track.artist_credit = process_artist_credit(track_data['artist-credit'])
 
-session.close()
+    db.session.commit()
+
+def cache_release(release):
+    url = (
+        'http://musicbrainz.org/ws/2/release/{}'
+        '?inc=recordings artist-credits&fmt=json'
+    ).format(release.mbid)
+
+    response = query_mb(url)
+
+    if response.status_code != 200:
+        return
+
+    data = response.json()
+
+    for key in {'id', 'title'}:
+        if key not in data:
+            return
+
+    # Handle merging of releases
+    if release.mbid != data['id']:
+        change_release_mbid(release, data['id'])
+
+    release.title = data['title']
+    release.last_cached = datetime.datetime.utcnow()
+
+    db.session.commit()
+
+    release.artist_credit = process_artist_credit(data['artist-credit'])
+
+    db.session.commit()
+
+    for track in release.tracks:
+        cache_track(track, data)
+
+    db.session.commit()
+
+def main():
+    config = {
+        'SQLALCHEMY_DATABASE_URI':'mysql://{}:{}@{}/waveplot_test'.format(passwords['mysql']['username'],passwords['mysql']['password'],passwords['mysql']['host'])
+    }
+
+    uncached_mbid_requests = defaultdict(int)
+
+    app = create_app(config)
+
+    idle = False
+
+    while 1:
+        if idle:
+            time.sleep(5) # Sleep for 30 seconds if things haven't just been processing
+
+        idle = True
+        rec = db.session.query(Recording).filter_by(last_cached=None).first()
+        if rec is not None:
+            idle = False
+            if uncached_mbid_requests[rec.mbid] < 10:
+                print(rec.mbid)
+                try:
+                    cache_recording(rec)
+                except requests.exceptions.ConnectionError:
+                    time.sleep(5)
+            else:
+                print("Not requesting {} - too many repeats!".format(rec.mbid))
+            uncached_mbid_requests[rec.mbid] += 1
+
+        rel = db.session.query(Release).filter_by(last_cached=None).first()
+        if rel is not None:
+            idle = False
+            if uncached_mbid_requests[rel.mbid] < 10:
+                print(rel.mbid)
+                try:
+                    cache_release(rel)
+                except requests.exceptions.ConnectionError:
+                    time.sleep(5)
+            else:
+                print("Not requesting {} - too many repeats!".format(rel.mbid))
+            uncached_mbid_requests[rel.mbid] += 1
+
+        artist = db.session.query(Artist).filter_by(last_cached=None).first()
+        if artist is not None:
+            idle = False
+            if uncached_mbid_requests[artist.mbid] < 10:
+                print(artist.mbid)
+                try:
+                    cache_artist(artist)
+                except requests.exceptions.ConnectionError:
+                    time.sleep(5)
+            else:
+                print("Not requesting {} - too many repeats!".format(artist.mbid))
+            uncached_mbid_requests[artist.mbid] += 1
+
+        """rec = db.session.query(Recording).filter(Recording.last_cached != None).order_by(Recording.last_cached).first()
+        if rec is not None:
+            idle = False
+            print(rec.mbid)
+            cache_recording(rec)
+
+        rel = db.session.query(Release).filter(Release.last_cached != None).order_by(Release.last_cached).first()
+        if rel is not None:
+            idle = False
+            print(rel.mbid)
+            cache_release(rel)"""
+
+main()

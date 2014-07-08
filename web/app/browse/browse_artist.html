@@ -1,0 +1,16 @@
+<div class="container">
+    <input type="search" class="form-control" placeholder="Filter... (case-sensitive)" style="margin-top:30px" ng-model="filter" ng-change="filter_artists()">
+    <div class="row" infinite-scroll="get_artists()" infinite-scroll-distance="3" infinite-scroll-disabled="{{disable_scroll}}" infinite-scroll-immediate-check="true" style="margin-top:30px">
+        <a href="/artist/{{a.mbid}}" ng-repeat="a in artists">
+            <div class="row" style="padding:10px" id="row_{{a.mbid}}" highlight-hover click-scroll>
+
+                <div class="col-md-12">
+                    <b>{{a.name}}</b><br/>
+                </div>
+            </div>
+        </a>
+        <div class="row text-center" ng-show="disable_scroll">
+            <span class="fa fa-spinner fa-spin" style="margin-bottom:20px"></span>
+        </div>
+    </div>
+</div>

@@ -6,7 +6,7 @@
         </div>
         <div class="col-md-10">
             <b>{{release.title}}</b><br/>
-            {{release.artist_credit}}
+            <i>{{release.artist_credit.name}}</i></br>
             <a href="http://musicbrainz.org/release/{{release.mbid}}" target="_blank"><img src="/assets/img/musicbrainz.ico" style="margin-right:0.5em;"></img>MusicBrainz</a>
         </div>
     </div>
@@ -14,7 +14,7 @@
     <div class="row">
         <table class="table table-striped">
             <tr ng-repeat="t in release.tracks">
-                <td>{{t.disc_number}} - {{t.track_number}}</td><td>{{t.mbid}}</td>
+                <td>{{t.disc_number}} - {{t.track_number}}</td><td>{{t.title}}</td><td>{{t.artist_credit.name}}</td>
             </tr>
         </table>
     </div>

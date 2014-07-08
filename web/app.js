@@ -9,6 +9,7 @@ var pages = {
     'waveplot-view': ['/waveplot/:uuid', '/waveplot/:uuid', {templateUrl: '/app/view/waveplot.html', controller: WavePlotViewController, resolve: WavePlotViewController.resolve}],
     'release-browse': ['/release', '/release', {templateUrl: '/app/browse/browse_release.html', controller: BrowseReleaseController, resolve: BrowseReleaseController.resolve}],
     'release-view': ['/release/:mbid', '/release/:mbid', {templateUrl: '/app/view/release.html', controller: ReleaseViewController, resolve: ReleaseViewController.resolve}],
+    'artist-browse': ['/artist', '/artist', {templateUrl: '/app/browse/browse_artist.html', controller: BrowseArtistController, resolve: BrowseArtistController.resolve}],
     'register': ['/register', '/register', {templateUrl: '/app/register/register.html', controller: RegisterController, resolve: RegisterController.resolve}]
 };
 
