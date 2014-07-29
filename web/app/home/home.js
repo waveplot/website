@@ -9,14 +9,14 @@ function HomeController($scope, $http) {
         $scope.tweets_loaded = true;
     });
 
-    $http.get('http://dev.waveplot.net/api/edit?q={"order_by":[{"field":"edit_time","direction":"desc"}],"limit":"4"}').success(function(data) {
+    $http.get('/api/edit?q={"order_by":[{"field":"edit_time","direction":"desc"}],"limit":"4"}').success(function(data) {
         $scope.activities = data.objects;
         $scope.activity_loaded = true;
 
         $scope.editors = {};
         $scope.waveplots = {};
         $.each(data.objects, function(k,v) {
-            $http.get('http://dev.waveplot.net/api/editor/'+v.editor.id).success(function(data) {
+            $http.get('/api/editor/'+v.editor.id).success(function(data) {
                 $scope.editors[v.editor.id] = data;
             });
         });

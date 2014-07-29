@@ -3,8 +3,8 @@ function json_post($http, url, data){
     return $http({
         method: 'POST',
         url: url,
-        data:  $.param(data),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+        data:  JSON.stringify(data),
+        headers: {'Content-Type': 'application/json'}
     });
 }
 
@@ -15,8 +15,8 @@ function RegisterController($scope, $http){
     $scope.input = {};
 
     $scope.submit = function() {
-        json_post($http, '/json/editor', {
-            "username":$scope.input.username,
+        json_post($http, '/api/editor', {
+            "name":$scope.input.username,
             "email":$scope.input.email
         }).success(function (data) {
             if(data.result == "success"){
@@ -28,7 +28,7 @@ function RegisterController($scope, $http){
     };
 
     $scope.activate = function() {
-        json_post($http, '/json/activate', {
+        json_post($http, '/api/activate', {
             "key":$scope.input.pin
         }).success(function (data) {
             if(data.result == "success"){
