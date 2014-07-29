@@ -346,6 +346,8 @@ class WavePlot(db.Model):
 
     version = db.Column(db.String(20, collation='ascii_bin'))
 
+    contexts = db.relationship('WavePlotContext', backref="waveplot", passive_updates=False)
+
     def __init__(self, uuid, length, trimmed_length, source_type, sample_rate,
                  bit_depth, bit_rate, num_channels, dr_level, image_sha1,
                  thumbnail, sonic_hash, version):
@@ -370,6 +372,31 @@ class WavePlot(db.Model):
     def thumbnail_b64(self):
         """Get the thumbnail image as base64-encoded binary data."""
         return base64.b64encode(self.thumbnail_bin)
+
+
+class WavePlotContext(db.Model):
+    __tablename__ = 'waveplot_context'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    waveplot_uuid = db.Column(db.Unicode(36, collation='utf8_bin'),
+                              db.ForeignKey('waveplot.uuid'))
+
+    release_mbid = db.Column(db.Unicode(36, collation='utf8_bin'), nullable=True, default=None)
+    recording_mbid = db.Column(db.Unicode(36, collation='utf8_bin'), nullable=True, default=None)
+    track_mbid = db.Column(db.Unicode(36, collation='utf8_bin'), nullable=True, default=None)
+    track_number = db.Column(db.SmallInteger, nullable=True, default=None)
+    disc_number = db.Column(db.SmallInteger, nullable=True, default=None)
+
+    def __init__(self, waveplot_uuid, release_mbid = None,
+                 recording_mbid = None, track_mbid = None, track_number = None,
+                 disc_number = None):
+        self.waveplot_uuid = waveplot_uuid
+        self.release_mbid = release_mbid
+        self.recording_mbid = recording_mbid
+        self.track_mbid = track_mbid
+        self.track_number = track_number
+        self.disc_number = disc_number
 
 
 # Class to model the questions/answers on the help page - not part of core data

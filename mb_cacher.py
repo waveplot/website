@@ -27,7 +27,7 @@ from collections import Counter, defaultdict
 from sqlalchemy import func
 
 import waveplot.schema
-from waveplot.schema import Artist, ArtistCredit, ArtistArtistCredit, Release, Recording, Track, WavePlot, db
+from waveplot.schema import Artist, ArtistCredit, ArtistArtistCredit, Release, Recording, Track, WavePlot, WavePlotContext, db
 
 from waveplot import create_app
 from waveplot.passwords import passwords
@@ -116,13 +116,13 @@ def cache_artist(artist):
     response = query_mb(url)
 
     if response.status_code != 200:
-        return
+        return None
 
     data = response.json()
 
     for key in {'id','name'}:
         if key not in data:
-            return
+            return None
 
     # Handle merging of recordings
     if artist.mbid != data['id']:
@@ -133,6 +133,8 @@ def cache_artist(artist):
 
     db.session.commit()
 
+    return data
+
 def cache_recording(recording):
     url = (
         'http://musicbrainz.org/ws/2/recording/{}'
@@ -142,13 +144,13 @@ def cache_recording(recording):
     response = query_mb(url)
 
     if response.status_code != 200:
-        return
+        return None
 
     data = response.json()
 
     for key in {'id','title'}:
         if key not in data:
-            return
+            return None
 
     # Handle merging of recordings
     if recording.mbid != data['id']:
@@ -162,22 +164,24 @@ def cache_recording(recording):
     recording.artist_credit = process_artist_credit(data['artist-credit'])
     db.session.commit()
 
+    return data
+
 def cache_track(track, data):
     media = data['media']
 
     if track.disc_number > len(media):
-        return
+        return None
     medium = media[track.disc_number - 1]
 
     tracks = medium['tracks']
 
     if track.track_number > len(tracks):
-        return
+        return None
     track_data = tracks[track.track_number - 1]
 
     if track.mbid != track_data['id']:
         # Not sure what to do here yet, so leave uncached
-        return
+        return None
 
     track.title = track_data['title']
     track.last_cached = datetime.datetime.utcnow()
@@ -187,6 +191,8 @@ def cache_track(track, data):
     track.artist_credit = process_artist_credit(track_data['artist-credit'])
 
     db.session.commit()
+
+    return data
 
 def cache_release(release):
     url = (
@@ -203,7 +209,7 @@ def cache_release(release):
 
     for key in {'id', 'title'}:
         if key not in data:
-            return
+            return None
 
     # Handle merging of releases
     if release.mbid != data['id']:
@@ -223,6 +229,122 @@ def cache_release(release):
 
     db.session.commit()
 
+    return data
+
+def cache_context(context):
+    # Attempt to get the track
+    track = (
+        db.session.query(Track).filter_by(mbid=context.track_mbid).first()
+        if context.track_mbid is not None
+        else None
+    )
+
+    # If the track doesn't exist, we need to obtain the release data
+    # Release must be present first, so ensure that
+    if track is None:
+        if context.release_mbid is None:
+            # If release is None, no way of linking - delete link and return
+            db.session.delete(context)
+            db.session.commit()
+            return
+
+        release = db.session.query(Release).filter_by(mbid=context.release_mbid).first()
+
+        if release is None:
+            release = Release(context.release_mbid)
+            db.session.add(release)
+            db.session.commit()
+
+        # Cache and use returned data to create tracks
+        data = cache_release(release)
+        # Update context in case release mbid has changed
+        context.release_mbid = release.mbid
+
+        # Get correct mbid, track number and disc number in context
+        track_data = None
+        if ((context.disc_number is not None) and
+                (context.track_number is not None)):
+            media = data['media']
+
+            if context.disc_number > len(media):
+                return
+            medium = media[context.disc_number - 1]
+
+            tracks = medium['tracks']
+
+            if context.track_number > len(tracks):
+                return None
+            track_data = tracks[context.track_number - 1]
+
+            if context.track_mbid is not None:
+                if context.track_mbid != track_data['id']:
+                    # Submitted link is out of date
+                    db.session.delete(context)
+                    db.session.commit()
+                    return
+            context.track_mbid = track_data['id']
+        elif context.track_mbid is not None:
+            media = data['media']
+
+            for disc_index, medium in enumerate(media):
+                for track_index, track in enumerate(medium['tracks']):
+                    if track['id'] == context.track_mbid:
+                        context.track_number = track_index + 1
+                        context.disc_number = disc_index + 1
+                        track_data = track
+                        break
+                if track_data is not None:
+                    break
+        else:
+            db.session.delete(context)
+            db.session.commit()
+            return
+
+        if context.recording_mbid is not None:
+            if context.recording_mbid != track_data['recording']['id']:
+                db.session.delete(context)
+                db.session.commit()
+                return
+
+        context.recording_mbid = track_data['recording']['id']
+
+        # If recording doesn't exist, create blank recording with correct mbid
+        recording = db.session.query(Recording).filter_by(mbid=context.recording_mbid).first()
+
+        if recording is None:
+            recording = Recording(context.recording_mbid)
+            db.session.add(recording)
+            db.session.commit()
+
+        # At this point, the release_mbid, recording_mbid, track_number, disc_number
+        # and track_mbid have been set. Release and recording both exist in the database.
+        # We can now create the track, if the track mbid is still unable to be found.
+
+        track = db.session.query(Track).filter_by(mbid=context.track_mbid).first()
+        if track is None:
+            track = Track(context.track_mbid, context.track_number, context.disc_number, context.release_mbid, context.recording_mbid)
+            print(track.mbid)
+            print(track.release_mbid)
+            print(track.recording_mbid)
+            db.session.add(track)
+            db.session.commit()
+
+        # Finally, cache the track, passing in the track data structure as is
+        # done in the cache_release procedure
+        cache_track(track, data)
+
+    print("Successfully got track {}".format(track.mbid))
+
+    # We now have a created track. Link this to the WavePlot.
+
+    # This one's a foreign key, so no need to check the returned WavePlot.
+    waveplot = db.session.query(WavePlot).filter_by(uuid=context.waveplot_uuid).first()
+    if waveplot not in track.waveplots:
+        track.waveplots.append(waveplot)
+
+    db.session.delete(context)
+    db.session.commit()
+
 def main():
     config = {
         'SQLALCHEMY_DATABASE_URI':'mysql://{}:{}@{}/waveplot_test'.format(passwords['mysql']['username'],passwords['mysql']['password'],passwords['mysql']['host'])
@@ -237,6 +359,11 @@ def main():
     while 1:
         if idle:
             time.sleep(5) # Sleep for 30 seconds if things haven't just been processing
+
+        context = db.session.query(WavePlotContext).first()
+        if context is not None:
+            idle = False
+            cache_context(context)
 
         idle = True
         rec = db.session.query(Recording).filter_by(last_cached=None).first()

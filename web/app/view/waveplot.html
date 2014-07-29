@@ -23,12 +23,8 @@
 
     <div class="row" style="margin-top:20px">
         <div class="col-md-12">
-            <div class="panel panel-default">
-                <div class="panel-heading" ng-click="toggleLinks()" style="cursor:pointer">Tracks <span class="pull-right" ng-class="links.icon_class"></span></div>
-                <div class="list-group" ng-show="links.expanded">
-                    <a href="/track/{{track.mbid}}" class="list-group-item" ng-repeat="track in waveplot.tracks">{{track.title}} {{track.mbid}}</a>
-                </div>
-            </div>
+            <h4>Appears on...</h4>
+            <a href="/track/{{track.mbid}}" class="list-group-item" ng-repeat="track in waveplot.tracks">{{track.title}} {{track.mbid}}</a>
         </div>
     </div>
 </div>

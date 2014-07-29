@@ -20,7 +20,7 @@
 from flask import Flask
 from flask.ext.restless import APIManager
 
-VERSION = b'CITRUS'
+VERSION = b'DAMSON'
 
 manager = APIManager()
 
@@ -74,5 +74,8 @@ def create_app(config):
         "waveplot",
         "waveplot.uuid"
     ])
+
+    from waveplot.schema import WavePlotContext
+    manager.create_api(WavePlotContext, methods=['POST'], exclude_columns=['waveplot'])
 
     return app

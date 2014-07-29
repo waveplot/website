@@ -64,13 +64,13 @@
 
                 <!-- List group -->
                 <ul class="list-group">
-                    <li style="padding-bottom:0px" data-ng-show="activity_loaded" class="list-group-item" data-ng-repeat="activity in activities">
+                    <a href='/waveplot/{{activity.waveplot.uuid}}' style="padding-bottom:0px" data-ng-show="activity_loaded" class="list-group-item" data-ng-repeat="activity in activities">
                         <small>
                             <div class="pull-right" date-to-ago="activity.edit_time"></div>
                             <div>{{editors[activity.editor.id].name}} added <code>{{activity.waveplot.uuid | limitTo : 8}}...</code></div>
                             <div class="text-center"><small><span class="fa fa-ellipsis-h"></span></small></div>
                         </small>
-                    </li>
+                    </a>
                     <li class="list-group-item text-center" data-ng-hide="activity_loaded">
                         <span class="fa fa-spinner fa-spin"></span>
                     </li>

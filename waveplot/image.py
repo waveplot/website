@@ -119,22 +119,14 @@ class WavePlotImage():
         self.sonic_hash = self.make_hash(min_val, max_val)
 
     def save(self, uuid):
-        self.filename_prefix = waveplot_uuid_to_filename(uuid)
-
-        image_dir = os.path.dirname(self.filename_prefix)
-
-        try:
-            os.makedirs(image_dir)
-        except OSError:
-            pass
-
-        if not os.path.exists(image_dir):
-            return "Upload failed. Unable to store images."
-
-        with open(self.filename_prefix, "wb") as img_file:
+        with open(
+            os.path.join("./static/images/waveplots/full",uuid[:3],uuid), "wb"
+        ) as img_file:
             img_file.write(self.raw_data)
 
-        with open(self.filename_prefix + "_preview", "wb") as img_file:
+        with open(
+            os.path.join("./static/images/waveplots/previews",uuid[:3],uuid), "wb"
+        ) as img_file:
             img_file.write(self.preview_data)
 
 

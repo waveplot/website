@@ -195,7 +195,7 @@ angular.module("waveplot.directives", []).directive('highlightHover', function (
                     diff_string = " year";
                 } else if(days < 30) {
                     value = days;
-                    diff_string = " minute";
+                    diff_string = " day";
                 } else {
                     value = months;
                     diff_string = " month";

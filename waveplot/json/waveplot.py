@@ -56,7 +56,7 @@ def pre_post(data=None, **kw):
 
     existing = db.session.query(WavePlot).filter_by(image_sha1 = data['image_sha1']).first()
     if existing is not None:
-        raise ProcessingException(message='Location: /api/waveplot/'+existing.uuid,
+        raise ProcessingException(message=existing.uuid,
                                   status_code=303)
 
     generated_uuid = uuid.uuid4()
@@ -111,14 +111,14 @@ def post_get_many(result=None, search_params=None, **kw):
         w['dr_level'] = w['dr_level'] / 10
 
 
-manager.create_api(WavePlot, methods=['GET'],
+manager.create_api(WavePlot, methods=['GET', 'POST'],
                    preprocessors={
-                       #'POST':[pre_post]
+                       'POST':[pre_post],
                    },
                    postprocessors={
                        'GET_SINGLE':[post_get],
-                       'GET_MANY':[post_get_many]
-                       #'POST':[post_post]
+                       'GET_MANY':[post_get_many],
+                       'POST':[post_post],
                    }
 )
 
