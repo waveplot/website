@@ -360,12 +360,13 @@ def main():
         if idle:
             time.sleep(5) # Sleep for 30 seconds if things haven't just been processing
 
+        idle = True
+
         context = db.session.query(WavePlotContext).first()
         if context is not None:
             idle = False
             cache_context(context)
 
-        idle = True
         rec = db.session.query(Recording).filter_by(last_cached=None).first()
         if rec is not None:
             idle = False

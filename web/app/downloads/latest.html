@@ -1,53 +1,40 @@
 <div class="container">
 	<p class="lead" style="margin-top:30px" translate>latest_lead</p>
 
-	<div class="row text-center">
-		<div class="col-xs-6">
-			<button type="button" class="btn btn-default btn-lg btn-block" ng-model="linux" btn-checkbox>
-				<span class="fa fa-linux fa-5x"></span>
-				<br/>
-				<h3>Linux</h3>
-			</button>
+	<div class="row">
+		<div class="col-md-9">
+		<h4>All Downloads</h4>
 		</div>
-		<div class="col-xs-6">
-			<button type="button" class="btn btn-default btn-lg btn-block" ng-model="windows" btn-checkbox>
-				<span class="fa fa-windows fa-5x"></span>
-				<br/>
-				<h3>Windows</h3>
-			</button>
+		<div class="col-md-3 text-right">
+			<label class="checkbox-inline">
+				<input type="checkbox" id="inlineCheckbox1" value="option1" checked><span class="fa fa-windows"></span>
+			</label>
+			<label class="checkbox-inline">
+				<input type="checkbox" id="inlineCheckbox1" value="option1" checked><span class="fa fa-linux"></span>
+			</label>
 		</div>
 	</div>
-	<hr>
-	<div class="row text-center">
-		<div class="col-xs-4" style="padding:10px">
-			<button type="button" class="btn btn-default btn-lg btn-block" ng-model="scanner" btn-checkbox>
-					<span class="fa fa-search fa-5x"></span>
-					<br/>
-					<h3>Scanner</h3>
-			</button>
-		</div>
-		<div class="col-xs-4" style="padding:10px">
-			<button type="button" class="btn btn-default btn-lg btn-block" ng-model="binaries" btn-checkbox>
-				<span class="fa fa-cogs fa-5x"></span>
-				<br/>
-				<h3>Binaries</h3>
-			</button>
-		</div>
-		<div class="col-xs-4" style="padding:10px">
-			<button type="button" class="btn btn-default btn-lg btn-block" ng-model="source" btn-checkbox>	
-				<span class="fa fa-code fa-5x"></span>
-				<br/>
-				<h3>Code</h3>
-			</button>
-		</div>
-	</div>
-	<hr>
-	<div class="row text-center">
-		<div class="col-xs-4 col-xs-offset-4">
-			<button type="button" class="btn btn-success btn-lg" ng-click="download()" ng-disabled="download_active()"><span class="fa fa-download" style="margin-right:1em;"></span>Download</button>
-		</div>
-		<div class="text-right col-xs-4">
-			<a href="/all-downloads"><span class="fa fa-plus" style="margin-right:.5em;"></span>All Versions</a>
+	<div class="row">
+		<div class="col-md-12">
+			<table class="table table-hover">
+				<tr style="cursor:pointer">
+					<td class="col-md-9">A</td>
+					<td class="col-md-2">asfsdgdfgdgsdfgsdgsdf</td>
+					<td class="col-md-2">940kb</td>
+					<td class="col-md-1">
+						<span class="fa fa-windows"></span>
+					</td>
+				</tr>
+				<tr>
+					<td class="col-md-9" rowspan="1">B</td>
+					<td class="col-md-2">asfsdgdfgdgsdfgsdgsdf</td>
+					<td class="col-md-2">940kb</td>
+					<td class="col-md-1">
+						<span class="fa fa-windows"></span>
+					</td>
+				</tr>
+
+			</table>
 		</div>
 	</div>
 </div>
