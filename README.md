@@ -11,3 +11,10 @@ Then, update passwords.py to point to the locations of these two files.
 You'll also need to install the Python packages Flask, Flask-Script and musicbrainz-ngs and their dependencies. You might also need the waveplot images depending on whether the database is given to you populated or with empty tables.
 
 I aim to improve this README soon, to make it a bit more friendly!
+
+Installing
+==========
+
+sudo apt-get install mysql-server5.5 memcached python-pip python-dev
+
+sudo pip install flask flask-sqlalchemy flask-restless python-memcached twitter
