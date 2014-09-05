@@ -4,8 +4,9 @@ var waveplot = angular.module("waveplot", ['waveplot.directives', 'waveplot.filt
 // List of pages with unique identifying string ids.
 var pages = {
     'help': ['/help', '/help', {templateUrl: '/app/help/help.html', controller: HelpCtrl, resolve: HelpCtrl.resolve}],
-    'latest-downloads': ['/latest-downloads', '/latest-downloads', {templateUrl: '/app/downloads/latest.html', controller: LatestDownloadsController, resolve: LatestDownloadsController.resolve}],
-    'all-downloads': ['/all-downloads', '/all-downloads', {templateUrl: '/app/downloads/all.html', controller: AllDownloadsController, resolve: AllDownloadsController.resolve}],
+    'downloads-windows': ['/downloads/windows', '/downloads/windows', {templateUrl: '/app/downloads/windows.html', controller: DownloadsController, resolve: DownloadsController.resolve}],
+    'downloads-linux': ['/downloads/linux', '/downloads/linux', {templateUrl: '/app/downloads/linux.html', controller: DownloadsController, resolve: DownloadsController.resolve}],
+    'downloads-other': ['/downloads/other', '/downloads/other', {templateUrl: '/app/downloads/other.html', controller: DownloadsController, resolve: DownloadsController.resolve}],
     'waveplot-view': ['/waveplot/:uuid', '/waveplot/:uuid', {templateUrl: '/app/view/waveplot.html', controller: WavePlotViewController, resolve: WavePlotViewController.resolve}],
     'release-browse': ['/release', '/release', {templateUrl: '/app/browse/browse_release.html', controller: BrowseReleaseController, resolve: BrowseReleaseController.resolve}],
     'release-view': ['/release/:mbid', '/release/:mbid', {templateUrl: '/app/view/release.html', controller: ReleaseViewController, resolve: ReleaseViewController.resolve}],
@@ -29,16 +30,21 @@ waveplot.config(function ($routeProvider, $locationProvider, $translateProvider,
 
     // Specify the default translations for the menu bar
     $translateProvider.translations('en', {
-        "help": "Help",
-        "downloads": "Downloads",
+        "help":"Help",
         "browse": {
-            "top": "Browse",
-            "artists": "Artists",
-            "albums": "Albums",
-            "songs": "Songs",
-            "dynamic-range": "Dynamic Range"
+            "top":"Browse",
+            "artists":"Artists",
+            "albums":"Albums",
+            "songs":"Songs",
+            "dynamic-range":"Dynamic Range"
+        },
+        "downloads": {
+            "top":"Downloads",
+            "windows":"Windows",
+            "linux":"Linux",
+            "other":"Other"
         }
-    });
+    }).fallbackLanguage('en');
 
     // Set up other translations
     $translateProvider.useLoader('$translatePartialLoader', {

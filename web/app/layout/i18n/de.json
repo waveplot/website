@@ -1,12 +1,17 @@
 {
     "help":"Hilfe",
-    "downloads":"Downloads",
     "browse": {
         "top":"Blättern",
         "artists":"Künstler",
         "albums":"Alben",
         "songs":"Songs",
         "dynamic-range":"Dynamic Range"
+    },
+    "downloads": {
+        "top":"Downloads",
+        "windows":"Windows",
+        "linux":"Linux",
+        "other":"Andere"
     }
 }
 

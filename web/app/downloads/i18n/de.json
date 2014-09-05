@@ -1,0 +1,41 @@
+{
+    "windows": {
+        "title": "",
+        "subtitle": "",
+        "lead": "",
+        "step1": "",
+        "step2": "",
+        "step3": ""
+    },
+    "linux": {
+        "lead": "Wenn Sie etwas Aroma von Linux sind , folgen Sie bitte den Anweisungen, um mit WavePlot loszulegen.",
+        "ubuntu": {
+            "title": "Ubuntu",
+            "subtitle": "14.04 oder später",
+            "lead1": "Ubuntu ist derzeit das einzige Linux-Variante offiziell unterstützt. Dies ist nicht aufgrund von Problemen mit anderen Distributionen , sondern einfach , weil ich nicht habe sie überall installiert . Einen Blick auf das ",
+            "other_downloads": "Andere Downloads,",
+            "lead2": "und fühlen sich frei , mich zu kontaktieren - wenn Sie möchten, um auf ein Paket für eine andere Verteilung zu arbeiten , würde ich gerne zu helfen, Sie trainieren alle Probleme, die auftreten könnten.",
+            "step1": {
+                "overview": "Zunächst einmal müssen Sie die libwaveplot Paket zu installieren. Sie können dies in einer von zwei Möglichkeiten zu bekommen.",
+                "a1": "Die empfohlene Quelle ist die offizielle libwaveplot PPA. Um zu starten, geben Sie folgende Befehle im Terminal, die die PPA in die Liste der Software-Quellen hinzufügen.",
+                "a2": "Anschließend können Sie das Paket wie folgt.",
+                "b": "Alternativ können Sie die aktuelle deb-Paket von libwaveplot unten herunterladen und installieren Sie es über das Ubuntu Software-Center oder das dpkg-Befehl."
+            },
+            "step2a": "Nachdem die Bibliothek installiert ist, stellen Sie sicher, dass Python 2.7 und installiert EVP. Wenn Sie das nicht tun, können Sie wahrscheinlich bekommen sie mit dem folgenden Befehl.",
+            "step2b": "Dann können Sie pip verwenden können, um die waveplot-Scanner-Tool, mit dem Sie erzeugen und hochladen WavePlots zu dieser Website installieren.",
+            "step3a": "Nach der Installation des Skripts, können Sie es wie folgt ausführen, auf einem beliebigen Verzeichnis mit Musikdateien.",
+            "register_here": "Registrieren Sie sich hier,",
+            "step3b": "um einen Editor Schlüssel zu erhalten."
+        }
+    },
+    "other": {
+        "lead": "Befolgen Sie diese Anweisungen zur Führung auf immer WavePlot Arbeiten an nicht unterstützte Plattformen.",
+        "step1a": "Sie werden zum einen müssen die libwaveplot Quellcode herunterladen . Sie können die Quell-Tarball von dieser Website (Link unten) herunterladen, oder die neueste Version von GitHub , je nachdem, was Sie bevorzugen.",
+        "step1b": "Zusammenstellung Anweisungen sind in der Datei README.md in der Verpackung enthalten. Die Vorgehensweise folgt der Zusammenstellung GNU Build-System Standard.",
+        "step2": "Vorausgesetzt, Sie sind in der Lage, Python 2.7 auf Ihrem System installiert haben, können Sie entweder das PIP -Tool , oder installieren waveplot - Scanner mit der mitgelieferten setup.py -Datei. Sie können die neueste Tarball von der Website herunterladen PyPI - Link siehe unten . Alternativ ist auch ein GitHub -Repository Link wieder bereitgestellt."
+    },
+    "libav": {
+        "summary": "",
+        "compiling": ""
+    }
+}

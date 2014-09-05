@@ -1,11 +1,16 @@
 {
     "help":"Help",
-    "downloads":"Downloads",
     "browse": {
         "top":"Browse",
         "artists":"Artists",
         "albums":"Albums",
         "songs":"Songs",
         "dynamic-range":"Dynamic Range"
+    },
+    "downloads": {
+        "top":"Downloads",
+        "windows":"Windows",
+        "linux":"Linux",
+        "other":"Other"
     }
 }

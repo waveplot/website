@@ -1,0 +1,106 @@
+<div class="container">
+    <p class="lead" style="margin-top:30px" translate>linux.lead</p>
+
+    <div class="row">
+        <div class="col-md-12">
+            <h2><span translate>linux.ubuntu.title</span> <small translate>linux.ubuntu.subtitle</small></h2>
+            <p>
+                <span translate>linux.ubuntu.lead1</span>
+                <a href="/downloads/other" translate>
+                    linux.ubuntu.other_downloads
+                </a>
+                <span translate>linux.ubuntu.lead2</span>
+            </p>
+
+            <ol>
+                <li>
+                    <p translate>linux.ubuntu.step1.overview</p>
+                    <ul>
+                        <li>
+                            <p translate>linux.ubuntu.step1.a1</p>
+
+<pre>
+    sudo add-apt-repository ppa:ben-sput/libwaveplot
+    sudo apt-get update
+</pre>
+
+                            <p translate>linux.ubuntu.step1.a2</p>
+<pre>
+    sudo apt-get install libwaveplot-0
+</pre>
+                        </li>
+                        <li>
+                            <p translate>linux.ubuntu.step1.b</p>
+
+                            <div class="row">
+                            <div class="col-md-6 col-md-offset-3">
+                                <table class="table table-condensed">
+                                    <tr>
+                                        <td><span class="fa fa-cogs" style="margin-right:0.5em"></span></td>
+                                        <td><a href="http://launchpad.net/~ben-sput/+archive/ubuntu/libwaveplot/+files/libwaveplot0_0.0-0ubuntu1_i386.deb">libwaveplot0_0.0-0ubuntu1_i386.deb</a></td>
+                                        <td>x86</td>
+                                        <td>13.2 KB</td>
+                                        <td><a href="/assets/libwaveplot0_0.0-0ubuntu1_i386.deb.md5" target="_self">md5</a></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="fa fa-code" style="margin-right:0.5em"></span></td>
+                                        <td><a href="http://launchpad.net/~ben-sput/+archive/ubuntu/libwaveplot/+files/libwaveplot0_0.0-0ubuntu1_amd64.deb">libwaveplot0_0.0-0ubuntu1_amd64.deb</a></td>
+                                        <td>x64</td>
+                                        <td>12.5 KB</td>
+                                        <td><a href="/assets/libwaveplot0_0.0-0ubuntu1_amd64.deb.md5" target="_self">md5</a></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <p translate>linux.ubuntu.step2a</p>
+
+<pre>
+    sudo add-get install python2.7 python-pip
+</pre>
+
+                    <p translate>linux.ubuntu.step2b</p>
+
+<pre>
+    sudo pip install waveplot-scanner
+</pre>
+
+                </li>
+                <li>
+                    <p><span translate>linux.ubuntu.step3a</span> <a href="/register" translate>linux.ubuntu.register_here</a> <span translate>linux.ubuntu.step3b</span></p>
+
+<pre>
+    waveplot-scanner.py &lt;editor_key_here&gt; &lt;path/to/music/here&gt;
+</pre>
+
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <div style="margin-top: 5em" class="row">
+        <div class="text-center col-md-12">
+            <p class="small">
+                This software uses code of <a href=http://libav.org>Libav</a>
+                licensed under the
+                <a href="http://www.gnu.org/licenses/lgpl.html">LGPLv3</a> and
+                its source can be downloaded
+                <a href="/assets/libav-9.16.tar.gz" target="_self">here</a>.
+            </p>
+
+            <p class="small">
+                I have tried to follow all measures listed on
+                <a href="https://libav.org/legal.html">
+                    https://libav.org/legal.html
+                </a> in distributing my library, however, I'm not a laywer, so
+                please discuss any potential issues with me and I'll be happy
+                to work to resolve them. Compilation instructions are included
+                in the libav package available from this page. See the
+                COMPILING-FOR-WAVEPLOT file.
+            </p>
+        </div>
+    </div>
+</div>

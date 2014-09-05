@@ -1,0 +1,41 @@
+{
+    "windows": {
+        "title": "",
+        "subtitle": "",
+        "lead": "",
+        "step1": "",
+        "step2": "",
+        "step3": ""
+    },
+    "linux": {
+        "lead": "Si vous utilisez un peu de saveur de Linux , s'il vous plaît suivez ces instructions pour commencer avec WavePlot .",
+        "ubuntu": {
+            "title": "Ubuntu",
+            "subtitle": "14.04 ou mieux",
+            "lead1": "Ubuntu est actuellement la seule saveur de Linux officiellement pris en charge . Ce n'est pas en raison de problèmes avec d'autres distributions , mais simplement parce que je n'ai pas les installé n'importe où . Si vous souhaitez travailler sur un paquet d'une autre distribution , je serais heureux de vous aider à travailler sur les problèmes qui pourraient se produire - jeter un oeil à la page",
+            "other_downloads": "Autres téléchargements",
+            "lead2": ", et n'hésitez pas à me contacter.",
+            "step1": {
+                "overview": "Tout d'abord, vous aurez besoin d'installer le paquet de libwaveplot. Vous pouvez obtenir ce dans l'une des deux façons.",
+                "a1": "La source recommandée est de la PPA officiel de libwaveplot. Pour commencer, entrez les commandes suivantes dans le terminal, ce qui ajoutera le PPA à votre liste de sources de logiciels.",
+                "a2": "Vous pouvez alors installer le paquet comme suit.",
+                "b": "Alternativement, vous pouvez télécharger le dernier paquet deb de libwaveplot ci-dessous, et l'installer à l'aide du Centre Ubuntu Software ou la commande dpkg."
+            },
+            "step2a": "Une fois que la bibliothèque est installée, assurez-vous que vous avez Python 2.7 et Pip installé. Si vous ne le faites pas, vous pouvez probablement les obtenir avec la commande suivante.",
+            "step2b": "Ensuite, vous pouvez utiliser pip pour installer l'outil waveplot-scanner, qui vous permettra de générer et de télécharger WavePlots de ce site.",
+            "step3a": "Après l'installation du script, vous pouvez l'exécuter comme suit, sur un répertoire contenant des fichiers musicaux.",
+            "register_here": "Inscrivez-vous ici",
+            "step3b": "pour obtenir une clé de l'éditeur."
+        }
+    },
+    "other": {
+        "lead": "",
+        "step1a": "",
+        "step1b": "",
+        "step2": ""
+    },
+    "libav": {
+        "summary": "",
+        "compiling": ""
+    }
+}
