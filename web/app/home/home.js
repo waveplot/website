@@ -21,6 +21,23 @@ function HomeController($scope, $http) {
             });
         });
     });
+
+    $scope.get_download_link = function(){
+        var split = navigator.platform.indexOf(' ', 6);
+        var platform = navigator.platform.toLowerCase();
+
+        if(split > -1) {
+            platform = platform.substr(0, split);
+        }
+
+        if(platform == 'linux i686' || platform == 'linux x86_64') {
+            return '/downloads/linux';
+        } else if (platform == 'win32') {
+            return '/downloads/windows';
+        } else {
+            return '/downloads/other';
+        }
+    }
 }
 
 HomeController.resolve = {
