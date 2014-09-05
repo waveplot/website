@@ -21,7 +21,7 @@ from waveplot import create_app
 from waveplot.passwords import passwords
 
 config = {
-    'SQLALCHEMY_DATABASE_URI':'mysql://{}:{}@{}/waveplot_test'.format(passwords['mysql']['username'],passwords['mysql']['password'],passwords['mysql']['host'])
+    'SQLALCHEMY_DATABASE_URI':'mysql://{}:{}@{}/waveplot'.format(passwords['mysql']['username'],passwords['mysql']['password'],passwords['mysql']['host'])
 }
 
 app = create_app(config)
