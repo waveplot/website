@@ -40,13 +40,13 @@ from waveplot.schema import db, WavePlot, Editor
 
 def pre_post(data=None, **kw):
     if data.get('version', None) != VERSION:
-        raise ProcessingException(message='Incorrect WavePlot Version - Update Client',
-                                  status_code=403)
+        raise ProcessingException(description='Incorrect WavePlot Version - Update Client',
+                                  code=403)
 
     editor = db.session.query(Editor).filter_by(key=data['editor']).first()
     if editor is None:
-        raise ProcessingException(message='Invalid Editor Key',
-                                  status_code=403)
+        raise ProcessingException(description='Invalid Editor Key',
+                                  code=403)
 
     data['editor'] = editor.id
 
@@ -56,8 +56,8 @@ def pre_post(data=None, **kw):
 
     existing = db.session.query(WavePlot).filter_by(image_sha1 = data['image_sha1']).first()
     if existing is not None:
-        raise ProcessingException(message=existing.uuid,
-                                  status_code=303)
+        raise ProcessingException(description=existing.uuid,
+                                  code=303)
 
     generated_uuid = uuid.uuid4()
     while db.session.query(WavePlot).filter_by(uuid = unicode(generated_uuid.hex)).count():
