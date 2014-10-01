@@ -23,19 +23,5 @@ from waveplot import manager
 
 from waveplot.schema import db, Recording
 
-import uuid
-
-def pre_post(data=None, **kw):
-    # Delete everything except mbid
-    for key in data.keys():
-        if key != 'mbid':
-            del data[key]
-
-    data['mbid'] = uuid.UUID(data['mbid']).hex
-
-manager.create_api(Recording, methods=['GET', 'POST'],
-                   preprocessors={
-                       'POST':[pre_post]
-                   }
-)
+manager.create_api(Recording, methods=['GET'], primary_key='gid')
 

@@ -24,4 +24,4 @@ from flask.ext.restless import ProcessingException
 from waveplot import manager
 from waveplot.schema import Artist
 
-manager.create_api(Artist, methods=['GET', 'POST'])
+manager.create_api(Artist, methods=['GET'], primary_key='gid')
