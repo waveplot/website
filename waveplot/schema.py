@@ -36,103 +36,20 @@ The following objects are defined:
 from __future__ import print_function, absolute_import, division
 
 import base64
+import datetime
 
 from flask.ext.sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+from .mb_schema import *
+from sqlalchemy.dialects.postgresql import UUID, BYTEA
+from sqlalchemy.sql import text
 
-
-TRACK_WAVEPLOT = db.Table(
-    'track_waveplot',
-    db.Column('track_mbid', db.Unicode(36, collation='utf8_bin'),
-              db.ForeignKey('track.mbid')),
-    db.Column('waveplot_uuid', db.Unicode(36, collation='utf8_bin'),
-              db.ForeignKey('waveplot.uuid'))
-)
-
-
-class Artist(db.Model):
-    """Represents an artist - someone who records music.
-
-    An artist can have many artist credits, which feature on tracks,
-    recordings and releases.
-    """
-
-    mbid = db.Column(db.Unicode(36, collation='utf8_bin'), primary_key=True)
-
-    name = db.Column(db.UnicodeText(collation='utf8_bin'), nullable=True, default=None)
-    last_cached = db.Column(db.DateTime, nullable=True, default=None)
-
-    # Data derived from relationships
-    artist_credit_assocs = db.relationship("ArtistArtistCredit", backref="artist", passive_updates=False)
-
-    def __init__(self, mbid, name=None):
-        self.mbid = mbid
-        self.name = name
-
-    def __repr__(self):
-        return "<Artist {!r}>".format(self.name)
-
-
-class ArtistArtistCredit(db.Model):
-    """A class to link artists to their artist credits.
-
-    Also enables artist credit names to be regenerated when one of the
-    individual credits changes.
-    """
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    credit_name = db.Column(db.UnicodeText(collation='utf8_bin'))
-    join_phrase = db.Column(db.UnicodeText(collation='utf8_bin'))
-
-    position = db.Column(db.SmallInteger())
-
-    artist_credit_id = db.Column(db.Integer, db.ForeignKey('artist_credit.id'))
-    artist_mbid = db.Column(db.Unicode(36, collation='utf8_bin'),
-                            db.ForeignKey('artist.mbid'))
-
-    artist_credit = db.relationship("ArtistCredit", backref="artist_assocs")
-
-    db.UniqueConstraint(position, artist_credit_id)
-
-    def __init__(self, credit_name, join_phrase, position, artist_credit_id,
-                 artist_mbid):
-        self.credit_name = credit_name
-        self.join_phrase = join_phrase
-        self.position = position
-        self.artist_credit_id = artist_credit_id
-        self.artist_mbid = artist_mbid
-
-    def __repr__(self):
-        return (
-            '<ArtistArtistCredit'
-            '{!r} in {!r}>'.format(self.credit_name, self.artist_credit_id)
-        )
-
-
-class ArtistCredit(db.Model):
-    """An artist credit - the way in which an artist is credited on a
-    track, recording or release.
-    """
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    name = db.Column(db.UnicodeText(collation='utf8_bin'), nullable=True, default=None)
-    last_cached = db.Column(db.DateTime, nullable=True, default=None)
-
-    # Relationships
-    releases = db.relationship("Release", backref="artist_credit")
-    recordings = db.relationship("Recording", backref="artist_credit")
-    tracks = db.relationship("Track", backref="artist_credit")
-
-    def __init__(self, name):
-        self.name = name
-
-    def __repr__(self):
-        return '<Artist Credit {!r}>'.format(self.name)
-
+WAVEPLOT_VERSIONS = [
+    u"CITRUS",
+    u"DAMSON",
+]
 
 class Edit(db.Model):
     """Respresents an Edit.
@@ -142,16 +59,17 @@ class Edit(db.Model):
     a WavePlot to various MusicBrainz entities.
     """
 
+    __table_args__ = {'schema':'waveplot'}
+
     #Properties
     id = db.Column(db.Integer, primary_key=True)
 
-    edit_time = db.Column(db.DateTime)
-    edit_type = db.Column(db.SmallInteger)
+    edit_time = db.Column(db.DateTime, nullable=False, default=text("(now() at time zone 'utc')"))
+    edit_type = db.Column(db.SmallInteger, nullable=False)
 
     #Relationships
-    editor_id = db.Column(db.Integer, db.ForeignKey('editor.id'))
-    waveplot_uuid = db.Column(db.Unicode(36, collation='utf8_bin'),
-                              db.ForeignKey('waveplot.uuid'))
+    editor_id = db.Column(db.Integer, db.ForeignKey('waveplot.editor.id'), nullable=False)
+    waveplot_uuid = db.Column(UUID, db.ForeignKey('waveplot.waveplot.uuid'), nullable=False)
 
     waveplot = db.relationship("WavePlot", backref="edits")
 
@@ -174,15 +92,17 @@ class Editor(db.Model):
     undone if made maliciously.
     """
 
+    __table_args__ = {'schema':'waveplot'}
+
     #Properties
     id = db.Column(db.Integer, primary_key=True)
 
-    name = db.Column(db.UnicodeText(collation='utf8_bin'))
-    email = db.Column(db.UnicodeText(collation='utf8_bin'))
-    key = db.Column(db.BigInteger)
+    name = db.Column(db.UnicodeText, nullable=False)
+    email = db.Column(db.UnicodeText, nullable=False)
+    key = db.Column(db.BigInteger, nullable=False)
 
-    queries_per_min = db.Column(db.Integer, default=60)
-    activated = db.Column(db.Boolean, default=False)
+    queries_per_min = db.Column(db.Integer, nullable=False, server_default=text("60"))
+    activated = db.Column(db.Boolean, nullable=False, default=False)
 
     #Relationships
     edits = db.relationship("Edit", backref='editor')
@@ -198,126 +118,26 @@ class Editor(db.Model):
         return '<Editor {!r}>'.format(self.name)
 
 
-class Release(db.Model):
-    """A release, which is a physically unique version of an album,
-    single, or other product. Contains tracks, which are related
-    to recordings.
-    """
+class WavePlotContext(db.Model):
 
-    mbid = db.Column(db.Unicode(36, collation='utf8_bin'), primary_key=True)
+    __tablename__ = 'waveplot_context'
+    __table_args__ = {'schema':'waveplot'}
 
-    title = db.Column(db.UnicodeText(collation='utf8_bin'), nullable=True, default=None)
-    last_cached = db.Column(db.DateTime, nullable=True, default=None)
+    id = db.Column(db.Integer, primary_key=True)
 
-    # Data derived from relationships
-    dr_level = db.Column(db.SmallInteger, nullable=True, default=None)
+    waveplot_uuid = db.Column(UUID, db.ForeignKey('waveplot.waveplot.uuid'), nullable=False)
 
-    artist_credit_id = db.Column(db.Integer, db.ForeignKey('artist_credit.id'), nullable=True, default=None)
-    tracks = db.relationship("Track", backref="release", passive_updates=False)
+    release_id = db.Column(db.Integer, db.ForeignKey('musicbrainz.release.id'), nullable=False)
+    recording_id = db.Column(db.Integer, db.ForeignKey('musicbrainz.recording.id'), nullable=False)
+    track_id = db.Column(db.Integer, db.ForeignKey('musicbrainz.track.id'), nullable=False)
+    artist_credit_id = db.Column(db.Integer, db.ForeignKey('musicbrainz.artist_credit.id'), nullable=False)
 
-    def __init__(self, mbid, title = None, last_cached = None, dr_level=None):
-        self.mbid = mbid
-        self.title = title
-        self.last_cached = last_cached
-        self.dr_level = dr_level
-
-    def __repr__(self):
-        return "<Release {!r}>".format(self.title)
-
-    # Calculate DR. DR should be stored as int with last digit after dp.
-    def calculate_dr(self):
-        """Calculate the DR level for the release, based on the average DR
-        level of its tracks.
-        """
-
-        average = reduce(lambda x, y: x + y.dr_level, self.tracks, 0.0)
-        num_tracks = len(self.tracks)
-
-        if num_tracks == 0:
-            self.dr_level = 0
-        else:
-            self.dr_level = int(average / num_tracks)
-
-
-class Recording(db.Model):
-    """A recording, which corresponds to the concept of a recording
-    in MusicBrainz. Can have many tracks, and can be linked to many
-    releases.
-    """
-
-    #Properties
-    mbid = db.Column(db.Unicode(36, collation='utf8_bin'), primary_key=True)
-
-    title = db.Column(db.UnicodeText(collation='utf8_bin'), nullable=True, default=None)
-    last_cached = db.Column(db.DateTime, nullable=True, default=None)
-
-    # Relationships
-    artist_credit_id = db.Column(db.Integer, db.ForeignKey('artist_credit.id'), nullable=True, default=None)
-    tracks = db.relationship("Track", backref="recording", passive_updates=False)
-
-    def __init__(self, mbid, title=None, last_cached=None):
-        self.mbid = mbid
-        self.title = title
-        self.last_cached = last_cached
-
-    def __repr__(self):
-        return "<Recording {!r}>".format(self.title)
-
-
-class Track(db.Model):
-    """A track is a defined segment of a release, which features some
-    audio.
-
-    In theory, tracks should have a one-to-one or many-to-one
-    relationship with WavePlots, but this might not be the case.
-    """
-
-    mbid = db.Column(db.Unicode(36, collation='utf8_bin'), primary_key=True)
-    track_number = db.Column(db.SmallInteger)
-    disc_number = db.Column(db.SmallInteger)
-
-    # Cached data
-    title = db.Column(db.UnicodeText(collation='utf8_bin'), nullable=True, default=None)
-    last_cached = db.Column(db.DateTime, nullable=True, default=None)
-
-    # Optional Info
-    bpm = db.Column(db.SmallInteger, nullable=True)
-    dr_level = db.Column(db.SmallInteger, nullable=True)
-
-    # Derived data
-    artist_credit_id = db.Column(db.Integer, db.ForeignKey('artist_credit.id'), nullable=True, default=None)
-    release_mbid = db.Column(db.Unicode(36, collation='utf8_bin'), db.ForeignKey('release.mbid'))
-    recording_mbid = db.Column(db.Unicode(36, collation='utf8_bin'), db.ForeignKey('recording.mbid'))
-
-    waveplots = db.relationship('WavePlot', secondary=TRACK_WAVEPLOT,
-                                backref=db.backref('tracks'), passive_updates=False)
-
-    def __init__(self, mbid, track_number, disc_number, release_mbid, recording_mbid, title = None, last_cached = None, dr_level=None):
-        self.mbid = mbid
-        self.track_number = track_number
-        self.disc_number = disc_number
+    def __init__(self, waveplot_uuid, release_mbid = None,
+                 recording_mbid = None, track_mbid = None):
+        self.waveplot_uuid = waveplot_uuid
         self.release_mbid = release_mbid
         self.recording_mbid = recording_mbid
-        self.title = title
-        self.last_cached = last_cached
-        self.dr_level = dr_level
-
-    def __repr__(self):
-        return "<Track {!r}>".format(self.title)
-
-    # Calculate DR. DR should be stored as int with last digit after dp.
-    def calculate_dr(self):
-        """Calculate the DR level for the track, based on the average DR
-        level of waveplots.
-        """
-
-        average = reduce(lambda x, y: x + y.dr_level, self.waveplots, 0.0)
-        num_waveplots = len(self.waveplots)
-
-        if num_waveplots == 0:
-            self.dr_level = 0
-        else:
-            self.dr_level = int(average / num_waveplots)
+        self.track_mbid = track_mbid
 
 
 class WavePlot(db.Model):
@@ -326,25 +146,32 @@ class WavePlot(db.Model):
     """
 
     __tablename__ = 'waveplot'
+    __table_args__ = {'schema':'waveplot'}
 
-    uuid = db.Column(db.Unicode(36, collation='utf8_bin'), primary_key=True)
+    uuid = db.Column(UUID, primary_key=True)
 
-    length = db.Column(db.Interval)
-    trimmed_length = db.Column(db.Interval)
+    length = db.Column(db.Interval, nullable=False)
+    trimmed_length = db.Column(db.Interval, nullable=False)
 
-    source_type = db.Column(db.String(20, collation='ascii_bin'))
+    source_type = db.Column(db.String(20), nullable=False)
     sample_rate = db.Column(db.Integer)
     bit_depth = db.Column(db.SmallInteger)
     bit_rate = db.Column(db.Integer)
 
-    num_channels = db.Column(db.SmallInteger)
-    dr_level = db.Column(db.SmallInteger)
+    num_channels = db.Column(db.SmallInteger, nullable=False)
+    dr_level = db.Column(db.SmallInteger, nullable=False)
 
-    image_sha1 = db.Column(db.BINARY(length=20))
-    thumbnail = db.Column(db.BINARY(length=50))
-    sonic_hash = db.Column(db.Integer)
+    image_hash = db.Column(BYTEA(length=20), nullable=False)
+    full = db.Column(BYTEA, nullable=False)
+    preview = db.Column(BYTEA(length=400), nullable=False)
+    thumbnail = db.Column(BYTEA(length=50), nullable=False)
+    sonic_hash = db.Column(db.Integer, nullable=False)
 
-    version = db.Column(db.String(20, collation='ascii_bin'))
+    version = db.Column(
+        db.Enum(*WAVEPLOT_VERSIONS, name='waveplot_version',
+                inherit_schema=True),
+        nullable=False
+    )
 
     contexts = db.relationship('WavePlotContext', backref="waveplot", passive_updates=False)
 
@@ -374,48 +201,25 @@ class WavePlot(db.Model):
         return base64.b64encode(self.thumbnail_bin)
 
 
-class WavePlotContext(db.Model):
-    __tablename__ = 'waveplot_context'
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    waveplot_uuid = db.Column(db.Unicode(36, collation='utf8_bin'),
-                              db.ForeignKey('waveplot.uuid'))
-
-    release_mbid = db.Column(db.Unicode(36, collation='utf8_bin'), nullable=True, default=None)
-    recording_mbid = db.Column(db.Unicode(36, collation='utf8_bin'), nullable=True, default=None)
-    track_mbid = db.Column(db.Unicode(36, collation='utf8_bin'), nullable=True, default=None)
-    track_number = db.Column(db.SmallInteger, nullable=True, default=None)
-    disc_number = db.Column(db.SmallInteger, nullable=True, default=None)
-
-    def __init__(self, waveplot_uuid, release_mbid = None,
-                 recording_mbid = None, track_mbid = None, track_number = None,
-                 disc_number = None):
-        self.waveplot_uuid = waveplot_uuid
-        self.release_mbid = release_mbid
-        self.recording_mbid = recording_mbid
-        self.track_mbid = track_mbid
-        self.track_number = track_number
-        self.disc_number = disc_number
-
 
 # Class to model the questions/answers on the help page - not part of core data
 class Question(db.Model):
     """Class to represent questions on the website help page.
     """
 
+    __table_args__ = {'schema':'waveplot'}
+
     id = db.Column(db.Integer, primary_key=True)
 
-    question = db.Column(db.UnicodeText(collation='utf8_bin'))
-    category = db.Column(db.SmallInteger)
+    question = db.Column(db.UnicodeText, nullable=False)
+    category = db.Column(db.SmallInteger, nullable=False)
 
     # Number of visits since "answered" date
-    visits = db.Column(db.Integer, default=0)
+    visits = db.Column(db.Integer, nullable=False, server_default=text("0"))
 
     # Optional properties
-    answer = db.Column(db.UnicodeText(collation='utf8_bin'), nullable=True,
-                       default=None)
-    answered = db.Column(db.DateTime, nullable=True, default=None)
+    answer = db.Column(db.UnicodeText, server_default=text("NULL"))
+    answered = db.Column(db.DateTime, server_default=text("NULL"))
 
     def __init__(self, question, category, answer=None, answered=None,
                  visits=0):
