@@ -50,10 +50,7 @@ angular.module("waveplot.directives", []).directive('highlightHover', function (
         },
         link: function render(scope, element, attrs) {
             scope.$watch('data', function(val , prev) {
-                if(val == prev)
-                    return;
-
-                var full = !element.hasClass("waveplot-preview");
+                var full = !(element.hasClass("waveplot-preview") || element.hasClass("waveplot-thumb"));
 
                 raw_data = atob(val);
 
@@ -205,6 +202,15 @@ angular.module("waveplot.directives", []).directive('highlightHover', function (
             value = value.toFixed(0);
             diff_string = value + diff_string + (value > 1 ? "s ago" : " ago");
             element.text(diff_string);
+        }
+    }
+}).directive('barcode', function () {
+    return {
+        link: function barcode(scope, element, attrs) {
+            element.barcode(attrs.barcodeValue, attrs.type, {
+                barHeight: attrs.height,
+                showHRI: ("barcodeText" in attrs)
+            });
         }
     }
 });
