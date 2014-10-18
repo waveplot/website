@@ -1,50 +1,47 @@
 
 
-function BrowseReleaseController($scope, $http, $timeout){
+function BrowseController($scope, $http, $timeout){
     $scope.selected = [];
-    $scope.releases = [];
-    $scope.filter = "";
-    var waiting_pages = {};
-    var load_next = 1;
-    var display_next = 1;
-    $scope.check = true;
+    $scope.collection = [];
+    $scope.page = 1;
+    $scope.type = "";
 
-    $scope.get_releases = function(){
-        var filters = [
-        ];
+    $scope.items_per_page_options = [
+        {name:"6 items per page", value:6},
+        {name:"12 items per page", value:12},
+        {name:"24 items per page", value:24},
+        {name:"48 items per page", value:48}
+    ];
 
-            filters.push({"name":"title", "op":"like", "val":"%"+$scope.filter});
-            filters.push({"name":"title", "op":"like", "val":$scope.filter+"%"});
-            filters.push({"name":"title", "op":"like", "val":"%"+$scope.filter+"%"});
+    $scope.items_per_page = 12;
 
-        var query_string = 'q={"filters":'+JSON.stringify(filters)+',"order_by":[{"field":"title","direction":"asc"}],"disjunction":true}';
-        $http.get('/api/release?page='+load_next+'&'+query_string).success(function(data){
-            waiting_pages[data.page] = data.objects;
 
-            // Check whether next page is ready for display
-            while(display_next in waiting_pages){
-                $scope.releases = $scope.releases.concat(waiting_pages[display_next]);
-                display_next += 1;
-            }
-        });
-        load_next += 1;
+    $scope.incrementPage = function(){
+        $scope.page++;
     };
 
-    $scope.filter_releases = function(){
-        var filterTextTimeout;
+    $scope.decrementPage = function(){
+        if($scope.page === 1) return;
 
-        $scope.$watch('filter', function () {
-            if (filterTextTimeout) $timeout.cancel(filterTextTimeout);
+        $scope.page--;
+    };
 
-            filterTextTimeout = $timeout(function() {
-                $scope.releases = [];
-                waiting_pages = {};
-                load_next = 1;
-                display_next = 1;
-                $scope.get_releases();
-            }, 250);
+    $scope.update_collection = function(){
+        $http.get('/api/'+$scope.type+'?offset='+(($scope.page-1)*$scope.items_per_page).toString()+'&limit='+$scope.items_per_page).success(function(data){
+            $scope.collection = data.objects;
         });
-    }
+    };
 
-    $scope.get_releases();
+    $scope.$watch('page', function(newValue, oldValue) {
+        if(newValue < 1){
+            $scope.page = 1;
+            return;
+        }
+
+        $scope.update_collection();
+    });
+
+    $scope.$watch('items_per_page', function(newValue, oldValue) {
+        $scope.update_collection();
+    });
 }
