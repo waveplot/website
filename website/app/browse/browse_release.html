@@ -1,14 +1,30 @@
-<div class="container">
-    <input type="search" class="form-control" placeholder="Filter... (case-sensitive)" style="margin-top:30px" ng-model="filter" ng-change="filter_releases()">
-    <div class="row" infinite-scroll="get_releases()" infinite-scroll-distance="3" infinite-scroll-disabled="{{disable_scroll}}" infinite-scroll-immediate-check="true" style="margin-top:30px">
-        <a href="/release/{{r.mbid}}" ng-repeat="r in releases">
+<div class="container" ng-init="type='release'">
+    <div class="row" style="margin-top:30px">
+        <div class="col-md-2 col-md-offset-5">
+            <div class="input-group">
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" ng-click="decrementPage()">&lt;</button>
+                </span>
+                <input type="text" class="form-control text-center" ng-model="page"></input>
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" ng-click="incrementPage()">&gt;</button>
+                </span>
+            </div><!-- /input-group -->
+        </div><!-- /.col-lg-6 -->
+        <div class="col-md-2 col-md-offset-3">
+            <select class="form-control" ng-model="items_per_page" ng-options="option.value as option.name for option in items_per_page_options"/>
+        </div>
+    </div><!-- /.row -->
+
+    <div class="row">
+        <a href="/release/{{r.gid}}" ng-repeat="r in collection">
             <div class="row" style="padding:10px" id="row_{{r.mbid}}" highlight-hover click-scroll>
 
                 <div class="col-md-1">
-                    <img class="img-responsive" fallback-src='https://coverartarchive.org/release/{{r.mbid}}/front-250' src='/assets/img/missingart.png'></img>
+                    <img class="img-responsive" fallback-src='https://coverartarchive.org/release/{{r.gid}}/front-250' src='/static/img/missingart.png'></img>
                 </div>
                 <div class="col-md-11">
-                    <b>{{r.title}}</b><br/>
+                    <b>{{r.name}}</b><br/>
                     <i>{{r.artist_credit.name}}</i>
                 </div>
             </div>

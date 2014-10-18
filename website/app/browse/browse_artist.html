@@ -1,8 +1,24 @@
-<div class="container">
-    <input type="search" class="form-control" placeholder="Filter... (case-sensitive)" style="margin-top:30px" ng-model="filter" ng-change="filter_artists()">
-    <div class="row" infinite-scroll="get_artists()" infinite-scroll-distance="3" infinite-scroll-disabled="{{disable_scroll}}" infinite-scroll-immediate-check="true" style="margin-top:30px">
-        <a href="/artist/{{a.mbid}}" ng-repeat="a in artists">
-            <div class="row" style="padding:10px" id="row_{{a.mbid}}" highlight-hover click-scroll>
+<div class="container" ng-init="type='artist_credit'">
+    <div class="row" style="margin-top:30px">
+        <div class="col-md-2 col-md-offset-5">
+            <div class="input-group">
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" ng-click="decrementPage()">&lt;</button>
+                </span>
+                <input type="text" class="form-control text-center" ng-model="page"></input>
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" ng-click="incrementPage()">&gt;</button>
+                </span>
+            </div><!-- /input-group -->
+        </div><!-- /.col-lg-6 -->
+        <div class="col-md-2 col-md-offset-3">
+            <select class="form-control" ng-model="items_per_page" ng-options="option.value as option.name for option in items_per_page_options"/>
+        </div>
+    </div><!-- /.row -->
+
+    <div class="row">
+        <a href="/artist/{{a.id}}" ng-repeat="a in collection">
+            <div class="row" style="padding:10px" id="row_{{a.id}}" highlight-hover click-scroll>
 
                 <div class="col-md-12">
                     <b>{{a.name}}</b><br/>
