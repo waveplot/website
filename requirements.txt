@@ -1,7 +1,0 @@
-python-memcached>=1.53
-flask-restless>=0.14.2
-flask-sqlalchemy
-flask
-sqlalchemy
-psycopg2
-twitter
