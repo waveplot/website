@@ -9,8 +9,10 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
+    # This entry is for the WavePlot webservice, which should also be
+    # installed and run.
     location /api {
         include uwsgi_params;
-        uwsgi_pass unix:/tmp/uwsgi.sock;
+        uwsgi_pass unix:/tmp/wpws.sock;
     }
 }
