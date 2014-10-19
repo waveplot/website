@@ -15,4 +15,11 @@ server {
         include uwsgi_params;
         uwsgi_pass unix:/tmp/wpws.sock;
     }
+
+    # This entry is for the WavePlot internal service, which should also be
+    # installed and run.
+    location /internal {
+        include uwsgi_params;
+        uwsgi_pass unix:/tmp/wpinternal.sock;
+    }
 }
