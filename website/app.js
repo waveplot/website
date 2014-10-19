@@ -11,7 +11,8 @@ var pages = {
     'release-browse': ['/release', '/release', {templateUrl: '/app/browse/browse_release.html', controller: BrowseController, resolve: BrowseController.resolve}],
     'release-view': ['/release/:gid', '/release/:gid', {templateUrl: '/app/view/release.html', controller: ReleaseViewController, resolve: ReleaseViewController.resolve}],
     'artist-browse': ['/artist', '/artist', {templateUrl: '/app/browse/browse_artist.html', controller: BrowseController, resolve: BrowseController.resolve}],
-    'register': ['/register', '/register', {templateUrl: '/app/register/register.html', controller: RegisterController, resolve: RegisterController.resolve}]
+    'register': ['/register', '/register', {templateUrl: '/app/register/register.html', controller: RegisterController, resolve: RegisterController.resolve}],
+    'activate': ['/activate/:key', '/activate/:key', {templateUrl: '/app/register/register.html', controller: RegisterController, resolve: RegisterController.resolve}]
 };
 
 // Configure the main module

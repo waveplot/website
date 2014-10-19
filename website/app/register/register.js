@@ -8,36 +8,43 @@ function json_post($http, url, data){
     });
 }
 
-function RegisterController($scope, $http){
+function RegisterController($scope, $http, $routeParams){
     delete $http.defaults.headers.common['X-Requested-With'];
 
-    $scope.mode = 0;
-    $scope.input = {};
-
     $scope.submit = function() {
-        json_post($http, '/api/editor', {
+        json_post($http, '/internal/register', {
             "name":$scope.input.username,
             "email":$scope.input.email
         }).success(function (data) {
-            if(data.result == "success"){
+            if(data.success === true){
                 $scope.mode = 1;
             } else {
-                $scope.error = data.error;
+                $scope.error = data.message;
             }
         });
     };
 
     $scope.activate = function() {
-        json_post($http, '/api/activate', {
-            "key":$scope.input.pin
+        json_post($http, '/internal/activate', {
+            "key":$scope.input.key
         }).success(function (data) {
-            if(data.result == "success"){
+            if(data.success === true){
                 $scope.mode = 2;
             } else {
-                $scope.error = data.error;
+                $scope.error = data.message;
             }
         });
     };
+
+    if($routeParams.key){
+        $scope.mode = 1;
+        $scope.input = {
+            "key": $routeParams.key
+        };
+    } else {
+        $scope.mode = 0;
+        $scope.input = {};
+    }
 }
 
 
