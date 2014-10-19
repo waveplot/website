@@ -45,8 +45,14 @@
         <p class="lead" style="margin-top:30px" translate>complete_lead</p>
     </div>
 
-    <div class="row" ng-if="error">
-        {{ error }}
+    <br/>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-danger" ng-if="error">
+                {{ error }}
+            </div>
+        </div>
     </div>
 </div>
 

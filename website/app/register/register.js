@@ -8,7 +8,7 @@ function json_post($http, url, data){
     });
 }
 
-function RegisterController($scope, $http, $routeParams){
+function RegisterController($scope, $http, $routeParams, $location){
     delete $http.defaults.headers.common['X-Requested-With'];
 
     $scope.submit = function() {
@@ -29,7 +29,7 @@ function RegisterController($scope, $http, $routeParams){
             "key":$scope.input.key
         }).success(function (data) {
             if(data.success === true){
-                $scope.mode = 2;
+                $location.path('/');
             } else {
                 $scope.error = data.message;
             }
