@@ -1,5 +1,5 @@
 // Create main module
-var waveplot = angular.module("waveplot", ['waveplot.directives', 'waveplot.filters', 'ngRoute', 'ngSanitize', 'ui.bootstrap', 'pascalprecht.translate', 'infinite-scroll']);
+var waveplot = angular.module("waveplot", ['waveplot.directives', 'waveplot.filters', 'ngRoute', 'ngSanitize', 'ui.bootstrap', 'pascalprecht.translate']);
 
 // List of pages with unique identifying string ids.
 var pages = {
