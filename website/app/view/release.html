@@ -2,20 +2,39 @@
     <div class="row" style="padding:10px">
 
         <div class="col-md-2">
-            <img class="img-responsive" fallback-src='https://coverartarchive.org/release/{{release.mbid}}/front-250' src='/assets/img/missingart.png'></img>
+            <img class="img-responsive" fallback-src='https://coverartarchive.org/release/{{release.gid}}/front-250' src='/static/img/missingart.png'></img>
         </div>
+
         <div class="col-md-10">
-            <b>{{release.title}}</b><br/>
-            <i>{{release.artist_credit.name}}</i></br>
-            <a href="http://musicbrainz.org/release/{{release.mbid}}" target="_blank"><img src="/assets/img/musicbrainz.ico" style="margin-right:0.5em;"></img>MusicBrainz</a>
+            <b>{{release.name}}</b><br/>
+            <i>{{artist_credit.name}}</i></br>
+            <a href="http://musicbrainz.org/release/{{release.gid}}" target="_blank"><img src="/static/img/musicbrainz.ico" style="margin-right:0.5em;"></img>MusicBrainz</a>
         </div>
     </div>
+
     <br/>
+
+
     <div class="row">
-        <table class="table table-striped">
-            <tr ng-repeat="t in release.tracks">
-                <td>{{t.disc_number}} - {{t.track_number}}</td><td>{{t.title}}</td><td>{{t.artist_credit.name}}</td>
-            </tr>
-        </table>
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading" ng-repeat-start="m in media">Disc {{m.position}} <a href="" ng-click="loadAllWavePlots(m)" class="pull-right"><span class="fa fa-plus"></span> Expand Tracks</a></div>
+                <ul class="list-group" ng-repeat-end>
+                    <li class="list-group-item" style="cursor:pointer;" ng-repeat="t in m.tracks" ng-click="loadWavePlots(t)">
+                        {{m.position}} - {{t.position}}. {{t.name}} <span class="pull-right">{{t.artist_credit.name}}</span>
+                        <a ng-repeat="w in t.waveplots" href="/waveplot/{{w.gid}}">
+                        <p>
+                            <canvas waveplot style="vertical-align: middle;" width="50" height="21" class="waveplot-thumb" data="w.thumbnail"></canvas>
+                            <code style="margin-left:1em">{{w.gid}}</code>
+                        </p>
+                        </a>
+                        <div>
+                            <span ng-if="t.has_waveplots === false">No WavePlots available.</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
+
 </div>

@@ -1,25 +1,40 @@
 
 function ReleaseViewController($scope, $modal, $http, $routeParams){
     $scope.release = {
-        "mbid":$routeParams.mbid
+        "gid":$routeParams.gid
     };
 
-    $http.get('/api/release/'+$scope.release.mbid).success(function(data){
-        data.tracks.sort(function(a, b) {
-            var disc_diff = a.disc_number - b.disc_number;
-            if(disc_diff != 0){
-                return disc_diff;
-            } else {
-                return a.track_number - b.track_number;
-            }
-        });
-
+    $http.get('/api/release/'+$scope.release.gid).success(function(data){
         $scope.release = data;
+        $http.get($scope.release.artist_credit).success(function(data){
+            $scope.artist_credit = data;
+        });
+    });
 
-        $.each($scope.release.tracks, function(k, v) {
-            $http.get('/api/track/'+v.mbid).success(function(data){
-                $scope.release.tracks[k] = data;
+    $http.get('/api/release/'+$scope.release.gid+'/media').success(function(data){
+        $scope.media = data.objects;
+        $.each($scope.media, function(k, v) {
+            $http.get(v.url+'/tracks').success(function(data){
+                v.tracks = data.objects;
             });
         });
     });
+
+    $scope.loadWavePlots = function(track){
+        if(!("waveplots" in track)){
+            $http.get(track.url+'/waveplots').success(function(data){
+                track.waveplots = data.objects;
+
+                if(track.waveplots.length == 0){
+                    track.has_waveplots = false;
+                }
+            });
+        }
+    }
+
+    $scope.loadAllWavePlots = function(medium){
+        $.each(medium.tracks, function(k,t){
+            $scope.loadWavePlots(t);
+        });
+    }
 }
